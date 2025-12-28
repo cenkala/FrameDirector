@@ -47,8 +47,10 @@ final class EditorViewModel {
     var isPlaying = false
     var currentFrameIndex = 0
     var showTitleCredits = false
+    var previewOverlay: PreviewOverlay = .none
 
     private var playbackTask: Task<Void, Never>?
+    private var overlayTask: Task<Void, Never>?
 
     init(project: MovieProject, modelContext: ModelContext) {
         self.project = project
@@ -122,6 +124,11 @@ final class EditorViewModel {
 
     func selectFrame(at globalIndex: Int) {
         guard globalIndex >= 0 && globalIndex < totalFrameCount else { return }
+        overlayTask?.cancel()
+        overlayTask = nil
+        if !isPlaying {
+            previewOverlay = .none
+        }
         currentFrameIndex = globalIndex
     }
 
@@ -258,19 +265,103 @@ final class EditorViewModel {
     }
     
     func stopPlayback() {
+        overlayTask?.cancel()
+        overlayTask = nil
         playbackTask?.cancel()
         playbackTask = nil
         isPlaying = false
+        previewOverlay = .none
+    }
+    
+    func showTitleCardPreview() {
+        playbackTask?.cancel()
+        playbackTask = nil
+        isPlaying = false
+        
+        overlayTask?.cancel()
+        overlayTask = nil
+        
+        let titleText = project.titleCardText?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !titleText.isEmpty else {
+            previewOverlay = .none
+            return
+        }
+        
+        previewOverlay = .title(text: titleText)
+    }
+    
+    func showCreditsPreview() {
+        playbackTask?.cancel()
+        playbackTask = nil
+        isPlaying = false
+        
+        overlayTask?.cancel()
+        overlayTask = nil
+        
+        let creditsText = ExportService.buildCreditsText(project: project) ?? ""
+        guard !creditsText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            previewOverlay = .none
+            return
+        }
+        
+        previewOverlay = .credits(text: creditsText, progress: 0)
+        
+        let fps = max(project.fps, 1)
+        let lineCount = max(1, creditsText.split(whereSeparator: \.isNewline).count)
+        let seconds = max(4, min(24, 2.0 + (Double(lineCount) * 1.15)))
+        let frameCount = max(fps * 3, Int((seconds * Double(fps)).rounded(.up)))
+        let nanosPerFrame = UInt64(1_000_000_000 / fps)
+        
+        overlayTask = Task { [weak self] in
+            guard let self else { return }
+            for i in 0..<frameCount {
+                if Task.isCancelled { return }
+                let progress = frameCount <= 1 ? 1.0 : Double(i) / Double(frameCount - 1)
+                await MainActor.run {
+                    if !self.isPlaying {
+                        self.previewOverlay = .credits(text: creditsText, progress: progress)
+                    }
+                }
+                try? await Task.sleep(nanoseconds: nanosPerFrame)
+            }
+        }
     }
     
     private func startPlayback() {
         guard project.fps > 0, !sortedFrames.isEmpty else { return }
+        
+        overlayTask?.cancel()
+        overlayTask = nil
         
         isPlaying = true
         playbackTask?.cancel()
         
         playbackTask = Task { [weak self] in
             guard let self else { return }
+            
+            let fps = max(self.project.fps, 1)
+            let nanosPerFrame = UInt64(1_000_000_000 / fps)
+            
+            let titleText = self.project.titleCardText?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let creditsText = ExportService.buildCreditsText(project: self.project)
+            
+            self.currentFrameIndex = 0
+            
+            let titleDurationFrames = (titleText?.isEmpty == false) ? (fps * 2) : 0
+            let creditsDurationFrames: Int = {
+                guard let creditsText, !creditsText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return 0 }
+                let lineCount = max(1, creditsText.split(whereSeparator: \.isNewline).count)
+                let seconds = max(4, min(24, 2.0 + (Double(lineCount) * 1.15)))
+                return max(fps * 3, Int((seconds * Double(fps)).rounded(.up)))
+            }()
+            
+            enum Phase {
+                case title(remaining: Int)
+                case frames
+                case credits(remaining: Int, total: Int)
+            }
+            
+            var phase: Phase = titleDurationFrames > 0 ? .title(remaining: titleDurationFrames) : .frames
             
             while !Task.isCancelled {
                 let frames = self.sortedFrames
@@ -279,10 +370,57 @@ final class EditorViewModel {
                     return
                 }
                 
-                let nextIndex = (self.currentFrameIndex + 1) % max(frames.count, 1)
-                self.currentFrameIndex = nextIndex
+                switch phase {
+                case .title(let remaining):
+                    if let titleText, !titleText.isEmpty {
+                        self.previewOverlay = .title(text: titleText)
+                    } else {
+                        self.previewOverlay = .none
+                    }
+                    
+                    let nextRemaining = remaining - 1
+                    if nextRemaining > 0 {
+                        phase = .title(remaining: nextRemaining)
+                    } else {
+                        self.previewOverlay = .none
+                        phase = .frames
+                    }
+                    
+                case .frames:
+                    self.previewOverlay = .none
+                    
+                    let nextIndex = self.currentFrameIndex + 1
+                    if nextIndex < frames.count {
+                        self.currentFrameIndex = nextIndex
+                    } else {
+                        if creditsDurationFrames > 0, let creditsText {
+                            phase = .credits(remaining: creditsDurationFrames, total: creditsDurationFrames)
+                            self.previewOverlay = .credits(text: creditsText, progress: 0)
+                        } else {
+                            self.currentFrameIndex = 0
+                            phase = titleDurationFrames > 0 ? .title(remaining: titleDurationFrames) : .frames
+                        }
+                    }
+                    
+                case .credits(let remaining, let total):
+                    if let creditsText, !creditsText.isEmpty {
+                        let clampedTotal = max(total, 1)
+                        let progress = min(1, max(0, 1.0 - (Double(remaining) / Double(clampedTotal))))
+                        self.previewOverlay = .credits(text: creditsText, progress: progress)
+                    } else {
+                        self.previewOverlay = .none
+                    }
+                    
+                    let nextRemaining = remaining - 1
+                    if nextRemaining > 0 {
+                        phase = .credits(remaining: nextRemaining, total: total)
+                    } else {
+                        self.previewOverlay = .none
+                        self.currentFrameIndex = 0
+                        phase = titleDurationFrames > 0 ? .title(remaining: titleDurationFrames) : .frames
+                    }
+                }
                 
-                let nanosPerFrame = UInt64(1_000_000_000 / max(self.project.fps, 1))
                 try? await Task.sleep(nanoseconds: nanosPerFrame)
             }
         }
@@ -295,5 +433,11 @@ final class EditorViewModel {
         }
         project.updatedAt = Date()
     }
+}
+
+enum PreviewOverlay: Equatable {
+    case none
+    case title(text: String)
+    case credits(text: String, progress: Double)
 }
 

@@ -20,15 +20,7 @@ actor ExportService {
         }
         
         let titleText = project.titleCardText
-        let creditsMode = project.creditsModeEnum
-        let plainCreditsText = project.plainCreditsText
-        let structuredCreditsJSON = project.structuredCreditsJSON
-        
-        let creditsText = await getCreditsText(
-            mode: creditsMode,
-            plainText: plainCreditsText,
-            structuredJSON: structuredCreditsJSON
-        )
+        let creditsText = ExportService.buildCreditsText(project: project)
         
         let tempURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
@@ -67,6 +59,36 @@ actor ExportService {
         return urls
     }
     
+    static func buildCreditsText(project: MovieProject) -> String? {
+        switch project.creditsModeEnum {
+        case .plain:
+            let trimmed = project.plainCreditsText?.trimmingCharacters(in: .whitespacesAndNewlines)
+            return (trimmed?.isEmpty == false) ? trimmed : nil
+        case .structured:
+            guard let jsonString = project.structuredCreditsJSON,
+                  let data = jsonString.data(using: .utf8),
+                  let credits = try? JSONDecoder().decode(StructuredCredits.self, from: data) else {
+                return nil
+            }
+            
+            var lines: [String] = []
+            if !credits.director.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                lines.append("Director: \(credits.director)")
+            }
+            if !credits.animator.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                lines.append("Animator: \(credits.animator)")
+            }
+            if !credits.music.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                lines.append("Music: \(credits.music)")
+            }
+            if !credits.thanks.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                lines.append("Thanks: \(credits.thanks)")
+            }
+            
+            return lines.isEmpty ? nil : lines.joined(separator: "\n")
+        }
+    }
+    
     private func loadFrameImages(for project: MovieProject) async throws -> [UIImage] {
         var images: [UIImage] = []
         
@@ -77,41 +99,6 @@ actor ExportService {
         }
         
         return images
-    }
-    
-    private func getCreditsText(
-        mode: CreditsMode,
-        plainText: String?,
-        structuredJSON: String?
-    ) async -> String? {
-        await MainActor.run {
-            switch mode {
-            case .plain:
-                return plainText
-            case .structured:
-                guard let jsonString = structuredJSON,
-                      let data = jsonString.data(using: .utf8),
-                      let credits = try? JSONDecoder().decode(StructuredCredits.self, from: data) else {
-                    return nil
-                }
-                
-                var lines: [String] = []
-                if !credits.director.isEmpty {
-                    lines.append("Director: \(credits.director)")
-                }
-                if !credits.animator.isEmpty {
-                    lines.append("Animator: \(credits.animator)")
-                }
-                if !credits.music.isEmpty {
-                    lines.append("Music: \(credits.music)")
-                }
-                if !credits.thanks.isEmpty {
-                    lines.append("Thanks: \(credits.thanks)")
-                }
-                
-                return lines.isEmpty ? nil : lines.joined(separator: "\n")
-            }
-        }
     }
     
     enum ExportError: LocalizedError {

@@ -106,6 +106,21 @@ struct EditorView: View {
                         .offset(x: 6, y: -6)
                     }
                 }
+                .confirmationDialog(
+                    LocalizedStringKey("editor.export"),
+                    isPresented: $showExportOptions,
+                    titleVisibility: .visible
+                ) {
+                    Button(LocalizedStringKey("general.save")) {
+                        startExport(action: .save)
+                    }
+                    Button(LocalizedStringKey("player.share")) {
+                        startExport(action: .share)
+                    }
+                    Button(LocalizedStringKey("general.cancel"), role: .cancel) { }
+                } message: {
+                    Text(LocalizedStringKey("editor.exportOptions.message"))
+                }
             }
         }
         .tint(.accentColor)
@@ -134,21 +149,6 @@ struct EditorView: View {
         }
         .onDisappear {
             viewModel.stopPlayback()
-        }
-        .confirmationDialog(
-            LocalizedStringKey("editor.export"),
-            isPresented: $showExportOptions,
-            titleVisibility: .visible
-        ) {
-            Button(LocalizedStringKey("general.save")) {
-                startExport(action: .save)
-            }
-            Button(LocalizedStringKey("player.share")) {
-                startExport(action: .share)
-            }
-            Button(LocalizedStringKey("general.cancel"), role: .cancel) { }
-        } message: {
-            Text(LocalizedStringKey("editor.exportOptions.message"))
         }
         .alert(
             LocalizedStringKey("error.exportFailed"),
@@ -207,6 +207,9 @@ struct EditorView: View {
                         .scaledToFit()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .clipped()
+                    
+                    PreviewTitleCreditsOverlay(overlay: viewModel.previewOverlay)
+                        .allowsHitTesting(false)
                     
                     // Enhanced frame counter
                     VStack {
@@ -409,53 +412,75 @@ struct EditorView: View {
     }
     
     private var timelineSection: some View {
-        TimelineView(
-            timelineItems: viewModel.timelineItems,
-            projectId: project.id,
-            currentFrameIndex: $viewModel.currentFrameIndex,
-            onDelete: { index in
-                viewModel.deleteFrame(at: index)
-            },
-            onDuplicate: { index in
-                if viewModel.canAddMoreFrames() {
-                    viewModel.duplicateFrame(at: index)
-                } else {
-                    paywallPresenter.presentPaywall()
-                }
-            },
-            onMoveFrame: { source, destination in
-                viewModel.moveFrame(from: source, to: destination)
-            },
-            onMoveTimelineItem: { sourceItemIndex, destinationItemIndex in
-                viewModel.moveTimelineItem(from: sourceItemIndex, to: destinationItemIndex)
-            },
-            onSetStackId: { frameId, stackId in
-                // No-op since we don't use stackId anymore
-            },
-            onMoveFrameById: { frameId, destinationIndex in
-                viewModel.moveFrameById(frameId, toGlobalIndex: destinationIndex)
-            },
-            onTapAddToStack: { stackId in
-                // No-op since we don't use stacks anymore
-            },
-            onAddCamera: {
-                showCaptureView = true
-            },
-            onAddPhotoLibrary: {
-                showImportView = true
-            },
-            onAddTitleCredits: {
-                viewModel.showTitleCredits = true
-            },
-            onSelectFrame: { index in
-                viewModel.selectFrame(at: index)
-            },
-            getGlobalIndex: { frame in
-                viewModel.getGlobalFrameIndex(for: frame)
+        let titleText = project.titleCardText?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let creditsText = ExportService.buildCreditsText(project: project) ?? ""
+        let hasTitle = !titleText.isEmpty
+        let hasCredits = !creditsText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        
+        return HStack(spacing: 8) {
+            if hasTitle {
+                TimelineAuxChip(
+                    title: "TITLE",
+                    systemImage: "textformat",
+                    action: { viewModel.showTitleCardPreview() }
+                )
             }
-        )
-        .frame(height: 100)
-        .padding(.horizontal, 4)
+            
+            TimelineView(
+                timelineItems: viewModel.timelineItems,
+                projectId: project.id,
+                currentFrameIndex: $viewModel.currentFrameIndex,
+                onDelete: { index in
+                    viewModel.deleteFrame(at: index)
+                },
+                onDuplicate: { index in
+                    if viewModel.canAddMoreFrames() {
+                        viewModel.duplicateFrame(at: index)
+                    } else {
+                        paywallPresenter.presentPaywall()
+                    }
+                },
+                onMoveFrame: { source, destination in
+                    viewModel.moveFrame(from: source, to: destination)
+                },
+                onMoveTimelineItem: { sourceItemIndex, destinationItemIndex in
+                    viewModel.moveTimelineItem(from: sourceItemIndex, to: destinationItemIndex)
+                },
+                onSetStackId: { frameId, stackId in
+                    // No-op since we don't use stackId anymore
+                },
+                onMoveFrameById: { frameId, destinationIndex in
+                    viewModel.moveFrameById(frameId, toGlobalIndex: destinationIndex)
+                },
+                onTapAddToStack: { stackId in
+                    // No-op since we don't use stacks anymore
+                },
+                onAddCamera: {
+                    showCaptureView = true
+                },
+                onAddPhotoLibrary: {
+                    showImportView = true
+                },
+                onAddTitleCredits: {
+                    viewModel.showTitleCredits = true
+                },
+                onSelectFrame: { index in
+                    viewModel.selectFrame(at: index)
+                },
+                getGlobalIndex: { frame in
+                    viewModel.getGlobalFrameIndex(for: frame)
+                }
+            )
+            .frame(height: 100)
+            
+            if hasCredits {
+                TimelineAuxChip(
+                    title: "CREDITS",
+                    systemImage: "list.bullet",
+                    action: { viewModel.showCreditsPreview() }
+                )
+            }
+        }
     }
     
     private enum ExportAction {
@@ -599,5 +624,98 @@ private struct ShareSheet: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) { }
+}
+
+private struct PreviewTitleCreditsOverlay: View {
+    let overlay: PreviewOverlay
+    
+    @State private var creditsTextHeight: CGFloat = 0
+    
+    var body: some View {
+        GeometryReader { geo in
+            switch overlay {
+            case .none:
+                EmptyView()
+                
+            case .title(let text):
+                ZStack {
+                    Color.black.opacity(0.92)
+                    
+                    Text(text)
+                        .font(.system(size: max(26, min(54, geo.size.height * 0.06)), weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(nil)
+                        .padding(.horizontal, max(20, geo.size.width * 0.08))
+                        .padding(.vertical, max(16, geo.size.height * 0.08))
+                }
+                
+            case .credits(let text, let progress):
+                ZStack {
+                    Color.black.opacity(0.92)
+                    
+                    creditsView(text: text, in: geo.size, progress: progress)
+                        .clipped()
+                        .padding(.horizontal, max(18, geo.size.width * 0.08))
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func creditsView(text: String, in size: CGSize, progress: Double) -> some View {
+        let paddingY = max(18, size.height * 0.08)
+        let startY = size.height - paddingY
+        let endY = -creditsTextHeight - paddingY
+        let y = startY + CGFloat(min(1, max(0, progress))) * (endY - startY)
+        
+        Text(text)
+            .font(.system(size: max(20, min(44, size.height * 0.05)), weight: .regular, design: .rounded))
+            .foregroundStyle(.white)
+            .multilineTextAlignment(.center)
+            .lineSpacing(max(6, size.height * 0.01))
+            .frame(maxWidth: .infinity)
+            .background(
+                GeometryReader { g in
+                    Color.clear
+                        .onAppear { creditsTextHeight = g.size.height }
+                        .onChange(of: g.size.height) { _, newValue in
+                            creditsTextHeight = newValue
+                        }
+                }
+            )
+            .offset(y: y)
+    }
+}
+
+private struct TimelineAuxChip: View {
+    let title: String
+    let systemImage: String
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.white)
+                
+                Text(title)
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.92))
+                    .tracking(0.8)
+            }
+            .frame(width: 62, height: 100)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color.black.opacity(0.35))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+    }
 }
 

@@ -51,7 +51,8 @@ actor VideoRenderer {
         
         var frameCount: Int64 = 0
         
-        if let titleCard = titleCard, !titleCard.isEmpty {
+        if let titleCard = titleCard?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !titleCard.isEmpty {
             let titleImage = createTitleCard(text: titleCard, size: frameSize)
             let titleFrameCount = fps * 2
             for _ in 0..<titleFrameCount {
@@ -67,12 +68,29 @@ actor VideoRenderer {
             frameCount += 1
         }
         
-        if let creditsText = creditsText, !creditsText.isEmpty {
-            let creditsImage = createCreditsCard(text: creditsText, size: frameSize)
-            let creditsFrameCount = fps * 3
-            for _ in 0..<creditsFrameCount {
+        if let creditsText = creditsText?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !creditsText.isEmpty {
+            let layout = makeScrollingCreditsLayout(text: creditsText, size: frameSize, fps: fps)
+            for i in 0..<layout.frameCount {
+                let t = layout.frameCount <= 1 ? 1.0 : Double(i) / Double(layout.frameCount - 1)
+                let y = layout.startY + CGFloat(t) * (layout.endY - layout.startY)
+                
+                let image = layout.renderer.image { context in
+                    UIColor.black.setFill()
+                    context.fill(CGRect(origin: .zero, size: frameSize))
+                    
+                    let textRect = CGRect(
+                        x: layout.paddingX,
+                        y: y,
+                        width: layout.availableWidth,
+                        height: layout.textHeight
+                    )
+                    
+                    layout.attributed.draw(with: textRect, options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
+                }
+                
                 let presentationTime = CMTime(value: frameCount, timescale: CMTimeScale(fps))
-                try await appendFrame(creditsImage, to: adaptor, at: presentationTime)
+                try await appendFrame(image, to: adaptor, at: presentationTime)
                 frameCount += 1
             }
         }
@@ -107,51 +125,103 @@ actor VideoRenderer {
             
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.alignment = .center
+            paragraphStyle.lineBreakMode = .byWordWrapping
+            paragraphStyle.lineSpacing = max(6, size.height * 0.008)
             
+            let baseFontSize = max(50, min(104, size.height * 0.095))
             let attributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 48, weight: .bold),
+                .font: UIFont.systemFont(ofSize: baseFontSize, weight: .bold),
                 .foregroundColor: UIColor.white,
                 .paragraphStyle: paragraphStyle
             ]
             
-            let textSize = text.size(withAttributes: attributes)
-            let textRect = CGRect(
-                x: (size.width - textSize.width) / 2,
-                y: (size.height - textSize.height) / 2,
-                width: textSize.width,
-                height: textSize.height
+            let paddingX = max(36, size.width * 0.08)
+            let paddingY = max(28, size.height * 0.08)
+            let bounding = CGRect(
+                x: paddingX,
+                y: paddingY,
+                width: size.width - (paddingX * 2),
+                height: size.height - (paddingY * 2)
             )
             
-            text.draw(in: textRect, withAttributes: attributes)
+            let attributed = NSAttributedString(string: text, attributes: attributes)
+            let measured = attributed.boundingRect(
+                with: bounding.size,
+                options: [.usesLineFragmentOrigin, .usesFontLeading],
+                context: nil
+            ).integral
+            
+            let drawRect = CGRect(
+                x: bounding.minX,
+                y: bounding.minY + max(0, (bounding.height - measured.height) / 2),
+                width: bounding.width,
+                height: measured.height
+            )
+            
+            attributed.draw(with: drawRect, options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
         }
     }
     
-    private func createCreditsCard(text: String, size: CGSize) -> UIImage {
+    private func makeScrollingCreditsLayout(text: String, size: CGSize, fps: Int) -> ScrollingCreditsLayout {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let safeFPS = max(fps, 1)
+        
         let renderer = UIGraphicsImageRenderer(size: size)
-        return renderer.image { context in
-            UIColor.black.setFill()
-            context.fill(CGRect(origin: .zero, size: size))
-            
-            let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.alignment = .center
-            paragraphStyle.lineSpacing = 8
-            
-            let attributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 24, weight: .regular),
-                .foregroundColor: UIColor.white,
-                .paragraphStyle: paragraphStyle
-            ]
-            
-            let padding: CGFloat = 40
-            let textRect = CGRect(
-                x: padding,
-                y: (size.height - 300) / 2,
-                width: size.width - (padding * 2),
-                height: 300
-            )
-            
-            text.draw(in: textRect, withAttributes: attributes)
-        }
+        
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.alignment = .center
+        paragraphStyle.lineBreakMode = .byWordWrapping
+        paragraphStyle.lineSpacing = max(10, size.height * 0.012)
+        
+        let fontSize = max(32, min(72, size.height * 0.062))
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: UIFont.systemFont(ofSize: fontSize, weight: .regular),
+            .foregroundColor: UIColor.white,
+            .paragraphStyle: paragraphStyle
+        ]
+        
+        let attributed = NSAttributedString(string: trimmed, attributes: attributes)
+        let paddingX = max(40, size.width * 0.10)
+        let paddingY = max(40, size.height * 0.10)
+        let availableWidth = size.width - (paddingX * 2)
+        
+        let measured = attributed.boundingRect(
+            with: CGSize(width: availableWidth, height: .greatestFiniteMagnitude),
+            options: [.usesLineFragmentOrigin, .usesFontLeading],
+            context: nil
+        ).integral
+        
+        let textHeight = max(measured.height, fontSize * 1.5)
+        // Start closer to the visible area so scrolling begins immediately.
+        let startY = size.height - paddingY
+        let endY = -textHeight - paddingY
+        let travelDistance = startY - endY
+        
+        let pointsPerSecond = max(180, size.height * 0.25)
+        let durationSeconds = max(3, min(24, Double(travelDistance) / Double(pointsPerSecond)))
+        let frameCount = max(safeFPS * 3, Int((durationSeconds * Double(safeFPS)).rounded(.up)))
+        
+        return ScrollingCreditsLayout(
+            renderer: renderer,
+            attributed: attributed,
+            paddingX: paddingX,
+            availableWidth: availableWidth,
+            textHeight: textHeight,
+            startY: startY,
+            endY: endY,
+            frameCount: frameCount
+        )
+    }
+    
+    private struct ScrollingCreditsLayout {
+        let renderer: UIGraphicsImageRenderer
+        let attributed: NSAttributedString
+        let paddingX: CGFloat
+        let availableWidth: CGFloat
+        let textHeight: CGFloat
+        let startY: CGFloat
+        let endY: CGFloat
+        let frameCount: Int
     }
     
     enum RenderError: LocalizedError {
