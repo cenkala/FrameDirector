@@ -1,6 +1,6 @@
 //
 //  VideoRenderer.swift
-//  SnapMotion
+//  Frame Director
 //
 //  Created by Cenk Alasonyalilar on 28.12.2025.
 //

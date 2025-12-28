@@ -1,6 +1,6 @@
 //
 //  AppTheme.swift
-//  SnapMotion
+//  Frame Director
 //
 //  Created by Cenk Alasonyalılar on 28.12.2025.
 //  Copyright © 2025 Cenk Alasonyalılar. All rights reserved.

@@ -1,6 +1,6 @@
 //
-//  SnapMotionApp.swift
-//  SnapMotion
+//  FrameDirectorApp.swift
+//  Frame Director
 //
 //  Created by Cenk Alasonyalilar on 28.12.2025.
 //
@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 
 @main
-struct SnapMotionApp: App {
+struct FrameDirectorApp: App {
     @State private var languageManager = LanguageManager.shared
     @State private var entitlementService = EntitlementService.shared
     

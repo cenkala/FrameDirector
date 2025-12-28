@@ -272,6 +272,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Frame Director";
 				INFOPLIST_KEY_NSCameraUsageDescription = "For you to use the photo or video taken for your stop motion movie.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "For saving the video that you create";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -318,6 +319,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Frame Director";
 				INFOPLIST_KEY_NSCameraUsageDescription = "For you to use the photo or video taken for your stop motion movie.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "For saving the video that you create";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
