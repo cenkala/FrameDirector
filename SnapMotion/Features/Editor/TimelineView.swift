@@ -130,7 +130,9 @@ struct TimelineView: View {
     let onSetStackId: (UUID, String?) -> Void
     let onMoveFrameById: (UUID, Int) -> Void
     let onTapAddToStack: (String) -> Void
-    let onTapAddToEnd: () -> Void
+    let onAddCamera: () -> Void
+    let onAddPhotoLibrary: () -> Void
+    let onAddTitleCredits: () -> Void
     let onSelectFrame: (Int) -> Void
     let getGlobalIndex: (FrameAsset) -> Int
 
@@ -279,8 +281,24 @@ struct TimelineView: View {
                 // Plus button at trailing edge
                 HStack {
                     Spacer()
-                    Button {
-                        onTapAddToEnd()
+                    Menu {
+                        Button {
+                            onAddCamera()
+                        } label: {
+                            Label(LocalizedStringKey("create.camera"), systemImage: "camera")
+                        }
+
+                        Button {
+                            onAddPhotoLibrary()
+                        } label: {
+                            Label(LocalizedStringKey("create.photoLibrary"), systemImage: "photo.on.rectangle")
+                        }
+
+                        Button {
+                            onAddTitleCredits()
+                        } label: {
+                            Label(LocalizedStringKey("editor.titleCredits"), systemImage: "text.alignleft")
+                        }
                     } label: {
                         Image(systemName: "plus")
                             .font(.headline.weight(.bold))
@@ -288,7 +306,7 @@ struct TimelineView: View {
                             .frame(width: 36, height: 36)
                             .background(Circle().fill(Color.accentColor))
                     }
-                    .buttonStyle(.plain)
+                    .menuStyle(.borderlessButton)
                     .padding(.trailing, 16)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)

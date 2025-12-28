@@ -21,12 +21,11 @@ struct EditorView: View {
     @State private var paywallPresenter = PaywallPresenter.shared
     @State private var isExporting = false
     @State private var exportError: String?
-    @State private var showExportSuccess = false
+    @State private var showExportOptions = false
+    @State private var showExportSavedAlert = false
     @State private var currentFrameImage: UIImage?
-    @State private var showAddDialog = false
-    @State private var pendingAddStackId: String? = nil
-    @State private var endPlusStackId: String? = nil
-    
+    @State private var exportShareURL: URL?
+    @State private var showShareSheet = false
     init(project: MovieProject, modelContext: ModelContext) {
         self.project = project
         self.viewModel = EditorViewModel(project: project, modelContext: modelContext)
@@ -44,19 +43,31 @@ struct EditorView: View {
                 endPoint: .bottom
             )
             .ignoresSafeArea()
-
-            VStack(spacing: 16) {
-            previewSection
+            
+            VStack(spacing: 0) {
+                previewSection
+                    .frame(maxWidth: .infinity)
+                    .frame(maxHeight: .infinity)
+                    .layoutPriority(1)
+                    .padding(.bottom, 10)
+                
                 playControlsSection
+                
+                timelineSection
+                    .padding(.horizontal, AppTheme.Metrics.screenPadding)
+                
                 Spacer(minLength: 0)
-            timelineSection
-        }
-            .padding(.horizontal, AppTheme.Metrics.screenPadding)
-            .padding(.top, 8)
+            }
+            .padding(.top, 0)
             .padding(.bottom, 16)
-        .frame(maxHeight: .infinity)
-        .navigationTitle(project.title)
-        .navigationBarTitleDisplayMode(.inline)
+            .frame(maxHeight: .infinity, alignment: .top)
+            .navigationTitle(project.title)
+            .navigationBarTitleDisplayMode(.inline)
+            
+            if isExporting {
+                exportHUD
+                    .transition(.opacity)
+            }
         }
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarBackground(
@@ -74,22 +85,12 @@ struct EditorView: View {
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button {
-                    handleExport()
+                    handleExportButtonTap()
                 } label: {
-                    ZStack {
-                        Circle()
-                            .fill(Color.blue.opacity(0.2))
-                            .frame(width: 36, height: 36)
-
-                    if isExporting {
-                        ProgressView()
-                                .tint(.blue)
-                    } else {
-                            Image(systemName: "square.and.arrow.up.fill")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(.blue)
-                        }
-                    }
+                    Image(systemName: "square.and.arrow.up.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 36, height: 36)
                 }
                 .disabled(!viewModel.canExport || isExporting)
                 .overlay(alignment: .topTrailing) {
@@ -110,10 +111,14 @@ struct EditorView: View {
         .tint(.accentColor)
         .appScreenBackground()
         .sheet(isPresented: $showCaptureView) {
-            CaptureView(project: project, targetStackId: pendingAddStackId)
+            CaptureView(
+                project: project,
+                targetStackId: nil,
+                lastFrameImage: currentFrameImage
+            )
         }
         .sheet(isPresented: $showImportView) {
-            ImportView(project: project, modelContext: modelContext, targetStackId: pendingAddStackId)
+            ImportView(project: project, modelContext: modelContext, targetStackId: nil)
         }
         .sheet(isPresented: $paywallPresenter.shouldShowPaywall) {
             PaywallView()
@@ -130,83 +135,65 @@ struct EditorView: View {
         .onDisappear {
             viewModel.stopPlayback()
         }
-        .alert("Export Failed", isPresented: .constant(exportError != nil)) {
-            Button("OK") {
+        .confirmationDialog(
+            LocalizedStringKey("editor.export"),
+            isPresented: $showExportOptions,
+            titleVisibility: .visible
+        ) {
+            Button(LocalizedStringKey("general.save")) {
+                startExport(action: .save)
+            }
+            Button(LocalizedStringKey("player.share")) {
+                startExport(action: .share)
+            }
+            Button(LocalizedStringKey("general.cancel"), role: .cancel) { }
+        } message: {
+            Text(LocalizedStringKey("editor.exportOptions.message"))
+        }
+        .alert(
+            LocalizedStringKey("error.exportFailed"),
+            isPresented: Binding(
+                get: { exportError != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        exportError = nil
+                    }
+                }
+            )
+        ) {
+            Button(LocalizedStringKey("general.ok"), role: .cancel) {
                 exportError = nil
             }
         } message: {
-            if let error = exportError {
-                Text(error)
-            }
+            Text(exportError ?? "")
         }
-        .alert("Export Successful", isPresented: $showExportSuccess) {
-            Button("OK") { }
+        .alert(
+            LocalizedStringKey("editor.exportSaved.title"),
+            isPresented: $showExportSavedAlert
+        ) {
+            Button(LocalizedStringKey("general.ok"), role: .cancel) { }
         } message: {
-            Text("Your video has been saved to Photos.")
+            Text(LocalizedStringKey("editor.exportSaved.message"))
         }
-        .confirmationDialog("Add", isPresented: $showAddDialog, titleVisibility: .hidden) {
-            Button {
-                showCaptureView = true
-            } label: {
-                Text(LocalizedStringKey("create.camera"))
-            }
-
-            Button {
-                showImportView = true
-            } label: {
-                Text(LocalizedStringKey("create.photoLibrary"))
-            }
-
-            Button {
-                viewModel.showTitleCredits = true
-            } label: {
-                Text(LocalizedStringKey("editor.titleCredits"))
-            }
-
-            Button(role: .cancel) {
-                pendingAddStackId = nil
-            } label: {
-                Text(LocalizedStringKey("general.cancel"))
+        .sheet(isPresented: $showShareSheet) {
+            if let url = exportShareURL {
+                ShareSheet(activityItems: [url])
             }
         }
     }
     
     private var previewSection: some View {
         ZStack {
-            // Main container with enhanced styling
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(AppTheme.Colors.elevatedSurface)
-                .shadow(
-                    color: Color.black.opacity(0.1),
-                    radius: 12,
-                    x: 0,
-                    y: 4
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .strokeBorder(
-                            LinearGradient(
-                                colors: [
-                                    AppTheme.Colors.separator.opacity(0.3),
-                                    AppTheme.Colors.separator.opacity(0.1)
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            ),
-                            lineWidth: 1
-                        )
-                )
-
             if viewModel.sortedFrames.isEmpty {
                 VStack(spacing: 16) {
                     Image(systemName: "film.stack")
                         .font(.system(size: 48))
                         .foregroundStyle(.secondary.opacity(0.6))
-
+                    
                     Text(LocalizedStringKey("editor.noFrames"))
                         .font(.headline)
                         .foregroundStyle(.secondary)
-
+                    
                     Text("Add frames to start creating your video")
                         .font(.subheadline)
                         .foregroundStyle(.secondary.opacity(0.7))
@@ -215,14 +202,12 @@ struct EditorView: View {
                 .padding(.horizontal, 24)
             } else if let currentFrameImage {
                 ZStack {
-                Image(uiImage: currentFrameImage)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .clipped()
-                        .cornerRadius(16)
-                        .padding(2)
-
+                    Image(uiImage: currentFrameImage)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .clipped()
+                    
                     // Enhanced frame counter
                     VStack {
                         HStack {
@@ -231,7 +216,7 @@ struct EditorView: View {
                                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                                     .fill(Color.black.opacity(0.7))
                                     .frame(width: 80, height: 32)
-
+                                
                                 HStack(spacing: 4) {
                                     Image(systemName: "rectangle.stack.fill")
                                         .font(.system(size: 12))
@@ -246,10 +231,9 @@ struct EditorView: View {
                         Spacer()
                     }
                 }
-                .padding(8)
             } else {
                 VStack(spacing: 16) {
-                ProgressView()
+                    ProgressView()
                         .scaleEffect(1.2)
                     Text("Loading frame...")
                         .font(.subheadline)
@@ -258,12 +242,13 @@ struct EditorView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 280)
-        .padding(.horizontal, 4)
+        .frame(maxHeight: .infinity)
     }
-
+    
     private var playControlsSection: some View {
-        HStack(spacing: 20) {
+        let controlCircleSize: CGFloat = 48
+
+        return HStack(spacing: 12) {
             // Left side - FPS Controls
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
@@ -290,43 +275,43 @@ struct EditorView: View {
                     } label: {
                         HStack(spacing: 6) {
                             Text("\(project.fps)")
-                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                                .font(.system(size: 15, weight: .bold, design: .rounded))
                                 .foregroundStyle(Color.accentColor)
                                 .monospacedDigit()
-
+                            
                             Image(systemName: "chevron.up.chevron.down")
-                                .font(.system(size: 10, weight: .semibold))
+                                .font(.system(size: 9, weight: .semibold))
                                 .foregroundStyle(.secondary)
                         }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 6)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 5)
                         .background(
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
                                 .fill(Color.accentColor.opacity(0.1))
                         )
                     }
-                    .frame(height: 32) // Fixed height for alignment
+                    .frame(height: 30) // Fixed height for alignment
                 }
-
+                
                 // Duration
                 VStack(alignment: .leading, spacing: 2) {
                     Text("DURATION")
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .font(.system(size: 9, weight: .bold, design: .rounded))
                         .foregroundStyle(.secondary.opacity(0.8))
                         .tracking(1)
-
+                    
                     HStack(spacing: 4) {
                         Image(systemName: "clock")
-                            .font(.system(size: 12))
+                            .font(.system(size: 11))
                             .foregroundStyle(.secondary)
                         Text(String(format: "%.1fs", project.duration))
-                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
                             .foregroundStyle(.primary)
                             .monospacedDigit()
                     }
-                    .frame(height: 20) // Fixed height for alignment
+                    .frame(height: 18) // Fixed height for alignment
                 }
-
+                
                 // Warning if needed
                 if viewModel.exceedsFreeDuration {
                     VStack {
@@ -339,9 +324,9 @@ struct EditorView: View {
                     .frame(height: 54) // Match total height of other elements
                 }
             }
-
+            
             Spacer()
-
+            
             // Center - Play Button
             Button {
                 viewModel.togglePlayback()
@@ -349,21 +334,21 @@ struct EditorView: View {
                 ZStack {
                     Circle()
                         .fill(viewModel.isPlaying ? Color.red.opacity(0.2) : Color.accentColor.opacity(0.2))
-                        .frame(width: 64, height: 64)
+                        .frame(width: controlCircleSize, height: controlCircleSize)
                         .shadow(
                             color: Color.black.opacity(0.1),
                             radius: 8,
                             x: 0,
                             y: 2
                         )
-
+                    
                     Image(systemName: viewModel.isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 24, weight: .semibold))
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(viewModel.isPlaying ? .red : Color.accentColor)
                 }
             }
             .disabled(viewModel.sortedFrames.isEmpty)
-
+            
             // Right side - Edit Menu
             Menu {
                 Button {
@@ -396,7 +381,7 @@ struct EditorView: View {
                 ZStack {
                     Circle()
                         .fill(Color.gray.opacity(0.2))
-                        .frame(width: 44, height: 44)
+                        .frame(width: controlCircleSize, height: controlCircleSize)
 
                     Image(systemName: "ellipsis")
                         .font(.system(size: 16, weight: .semibold))
@@ -405,8 +390,8 @@ struct EditorView: View {
             }
             .disabled(viewModel.sortedFrames.isEmpty)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(AppTheme.Colors.elevatedSurface)
@@ -421,54 +406,93 @@ struct EditorView: View {
                         .strokeBorder(AppTheme.Colors.separator.opacity(0.15), lineWidth: 1)
                 )
         )
-        .padding(.horizontal, 4)
     }
-
+    
     private var timelineSection: some View {
-            TimelineView(
-                timelineItems: viewModel.timelineItems,
-                projectId: project.id,
-                currentFrameIndex: $viewModel.currentFrameIndex,
-                onDelete: { index in
-                    viewModel.deleteFrame(at: index)
-                },
-                onDuplicate: { index in
-                    if viewModel.canAddMoreFrames() {
-                        viewModel.duplicateFrame(at: index)
-                    } else {
-                        paywallPresenter.presentPaywall()
-                    }
-                },
-                onMoveFrame: { source, destination in
-                    viewModel.moveFrame(from: source, to: destination)
-                },
-                onMoveTimelineItem: { sourceItemIndex, destinationItemIndex in
-                    viewModel.moveTimelineItem(from: sourceItemIndex, to: destinationItemIndex)
-                },
-                onSetStackId: { frameId, stackId in
-                    // No-op since we don't use stackId anymore
-                },
-                onMoveFrameById: { frameId, destinationIndex in
-                    viewModel.moveFrameById(frameId, toGlobalIndex: destinationIndex)
-                },
-                onTapAddToStack: { stackId in
-                    // No-op since we don't use stacks anymore
-                },
-                onTapAddToEnd: {
-                    showAddDialog = true
-                },
-                onSelectFrame: { index in
-                    viewModel.selectFrame(at: index)
-                },
-                getGlobalIndex: { frame in
-                    viewModel.getGlobalFrameIndex(for: frame)
+        TimelineView(
+            timelineItems: viewModel.timelineItems,
+            projectId: project.id,
+            currentFrameIndex: $viewModel.currentFrameIndex,
+            onDelete: { index in
+                viewModel.deleteFrame(at: index)
+            },
+            onDuplicate: { index in
+                if viewModel.canAddMoreFrames() {
+                    viewModel.duplicateFrame(at: index)
+                } else {
+                    paywallPresenter.presentPaywall()
                 }
-            )
+            },
+            onMoveFrame: { source, destination in
+                viewModel.moveFrame(from: source, to: destination)
+            },
+            onMoveTimelineItem: { sourceItemIndex, destinationItemIndex in
+                viewModel.moveTimelineItem(from: sourceItemIndex, to: destinationItemIndex)
+            },
+            onSetStackId: { frameId, stackId in
+                // No-op since we don't use stackId anymore
+            },
+            onMoveFrameById: { frameId, destinationIndex in
+                viewModel.moveFrameById(frameId, toGlobalIndex: destinationIndex)
+            },
+            onTapAddToStack: { stackId in
+                // No-op since we don't use stacks anymore
+            },
+            onAddCamera: {
+                showCaptureView = true
+            },
+            onAddPhotoLibrary: {
+                showImportView = true
+            },
+            onAddTitleCredits: {
+                viewModel.showTitleCredits = true
+            },
+            onSelectFrame: { index in
+                viewModel.selectFrame(at: index)
+            },
+            getGlobalIndex: { frame in
+                viewModel.getGlobalFrameIndex(for: frame)
+            }
+        )
         .frame(height: 100)
         .padding(.horizontal, 4)
     }
     
-    private func handleExport() {
+    private enum ExportAction {
+        case save
+        case share
+    }
+    
+    private var exportHUD: some View {
+        ZStack {
+            Color.black.opacity(0.12)
+                .ignoresSafeArea()
+            
+            VStack(spacing: 10) {
+                ProgressView()
+                    .tint(.white)
+                    .scaleEffect(1.05)
+                
+                Text(LocalizedStringKey("editor.exporting"))
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.95))
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.black.opacity(0.75))
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+            }
+            .shadow(color: Color.black.opacity(0.25), radius: 18, x: 0, y: 10)
+        }
+        .animation(.easeInOut(duration: 0.15), value: isExporting)
+    }
+    
+    private func handleExportButtonTap() {
         guard viewModel.canExport else { return }
         
         if !FeatureGateService.shared.canAccess(.videoExport) {
@@ -481,7 +505,16 @@ struct EditorView: View {
             return
         }
         
+        showExportOptions = true
+    }
+    
+    private func startExport(action: ExportAction) {
+        guard viewModel.canExport else { return }
+        guard !isExporting else { return }
+        
         isExporting = true
+        exportError = nil
+        exportShareURL = nil
         
         Task {
             do {
@@ -492,13 +525,21 @@ struct EditorView: View {
                     project.exportedVideoURL = url.absoluteString
                     project.updatedAt = Date()
                     try? modelContext.save()
+                    exportShareURL = url
                 }
                 
-                try await saveVideoToPhotos(url: url)
-                
-                await MainActor.run {
-                    isExporting = false
-                    showExportSuccess = true
+                switch action {
+                case .save:
+                    try await saveVideoToPhotos(url: url)
+                    await MainActor.run {
+                        isExporting = false
+                        showExportSavedAlert = true
+                    }
+                case .share:
+                    await MainActor.run {
+                        isExporting = false
+                        showShareSheet = true
+                    }
                 }
             } catch {
                 await MainActor.run {
@@ -548,5 +589,15 @@ struct EditorView: View {
         let frame = frames[safeIndex]
         currentFrameImage = await MovieStorage.shared.loadFrame(fileName: frame.localFileName, projectId: project.id)
     }
+}
+
+private struct ShareSheet: UIViewControllerRepresentable {
+    let activityItems: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) { }
 }
 

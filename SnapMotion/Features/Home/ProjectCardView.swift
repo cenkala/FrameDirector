@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct ProjectCardView: View {
     let project: MovieProject
@@ -13,11 +14,22 @@ struct ProjectCardView: View {
     let onEdit: () -> Void
     let onDelete: () -> Void
     let canDelete: Bool
+
+    @State private var thumbnailImage: UIImage?
+
+    private var hasPlayableVideo: Bool {
+        if project.exportedVideoURL != nil {
+            return true
+        }
+
+        let url = MovieStorage.exportedVideoFileURL(projectId: project.id)
+        return FileManager.default.fileExists(atPath: url.path)
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top, spacing: 12) {
-                AppIconBadge(systemImage: "film")
+                projectBadge
 
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -27,10 +39,6 @@ struct ProjectCardView: View {
                             .lineLimit(1)
 
                         Spacer()
-
-                        if project.exportedVideoURL != nil {
-                            AppChip(systemImage: "checkmark.circle.fill", textKey: LocalizedStringKey("general.done"))
-                        }
                     }
 
                     HStack(spacing: 8) {
@@ -51,50 +59,63 @@ struct ProjectCardView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(.accentColor)
 
-                if project.exportedVideoURL != nil {
+                if hasPlayableVideo {
                     Button {
                         onPlay()
                     } label: {
-                        Label(LocalizedStringKey("home.project.play"), systemImage: "play.fill")
-                            .frame(maxWidth: .infinity)
+                        Image(systemName: "play.fill")
+                            .font(.headline.weight(.semibold))
+                            .frame(width: 44, height: 36)
                     }
                     .buttonStyle(.bordered)
                     .tint(.accentColor)
                 }
 
-                Menu {
-                    Button {
-                        onEdit()
-                    } label: {
-                        Label(LocalizedStringKey("home.project.edit"), systemImage: "pencil")
+                Button(role: .destructive) {
+                    if canDelete {
+                        onDelete()
                     }
-
-                    if project.exportedVideoURL != nil {
-                        Button {
-                            onPlay()
-                        } label: {
-                            Label(LocalizedStringKey("home.project.play"), systemImage: "play.fill")
-                        }
-                    }
-
-                    Button(role: .destructive) {
-                        if canDelete {
-                            onDelete()
-                        }
-                    } label: {
-                        Label(LocalizedStringKey("general.delete"), systemImage: "trash")
-                    }
-                    .disabled(!canDelete)
                 } label: {
-                    Image(systemName: "ellipsis")
+                    Image(systemName: "trash")
                         .font(.headline.weight(.semibold))
                         .frame(width: 44, height: 36)
                 }
                 .buttonStyle(.bordered)
-                .tint(.accentColor)
+                .tint(AppTheme.Colors.destructive)
+                .disabled(!canDelete)
             }
         }
         .appCard()
+        .task(id: project.id) {
+            await loadThumbnailIfNeeded()
+        }
+    }
+
+    private var projectBadge: some View {
+        Group {
+            if let thumbnailImage {
+                Image(uiImage: thumbnailImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 44, height: 44)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(AppTheme.Colors.separator.opacity(0.25), lineWidth: 1)
+                    }
+            } else {
+                AppIconBadge(systemImage: "film")
+            }
+        }
+    }
+
+    private func loadThumbnailIfNeeded() async {
+        guard thumbnailImage == nil else { return }
+
+        let firstFrame = project.frames.min(by: { $0.orderIndex < $1.orderIndex })
+        guard let firstFrame else { return }
+
+        thumbnailImage = await MovieStorage.shared.loadFrame(fileName: firstFrame.localFileName, projectId: project.id)
     }
 }
 

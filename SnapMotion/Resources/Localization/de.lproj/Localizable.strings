@@ -66,6 +66,9 @@
 "editor.deleteFrame" = "Frame löschen";
 "editor.duplicateFrame" = "Frame duplizieren";
 "editor.export" = "Exportieren";
+"editor.exportOptions.message" = "Was möchtest du tun?";
+"editor.exportSaved.title" = "Gespeichert";
+"editor.exportSaved.message" = "Dein Video wurde in Fotos gespeichert.";
 "editor.titleCredits" = "Titel & Abspann";
 "editor.freeLimit" = "Kostenlose Nutzer: max 5 Sekunden";
 "editor.proFeature" = "Pro-Funktion";

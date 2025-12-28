@@ -66,6 +66,9 @@
 "editor.deleteFrame" = "Kare Sil";
 "editor.duplicateFrame" = "Kare Kopyala";
 "editor.export" = "Dışa Aktar";
+"editor.exportOptions.message" = "Ne yapmak istersin?";
+"editor.exportSaved.title" = "Kaydedildi";
+"editor.exportSaved.message" = "Videon Fotoğraflar'a kaydedildi.";
 "editor.titleCredits" = "Başlık & Jenerik";
 "editor.freeLimit" = "Ücretsiz kullanıcılar: max 5 saniye";
 "editor.proFeature" = "Pro Özellik";

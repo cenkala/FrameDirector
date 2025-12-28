@@ -26,6 +26,14 @@ actor MovieStorage {
     func projectDirectory(for projectId: UUID) -> URL {
         moviesDirectory.appendingPathComponent(projectId.uuidString)
     }
+
+    nonisolated static func exportedVideoFileURL(projectId: UUID) -> URL {
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        return documentsDirectory
+            .appendingPathComponent("Movies")
+            .appendingPathComponent(projectId.uuidString)
+            .appendingPathComponent("export.mp4")
+    }
     
     func createProjectDirectory(for projectId: UUID) throws {
         let dir = projectDirectory(for: projectId)

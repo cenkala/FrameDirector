@@ -45,11 +45,24 @@ struct PlayerView: View {
     }
     
     private func loadVideo() {
-        guard let urlString = project.exportedVideoURL,
-              let url = URL(string: urlString) else {
+        var candidates: [URL] = []
+
+        if let urlString = project.exportedVideoURL,
+           let url = URL(string: urlString) {
+            candidates.append(url)
+        }
+
+        candidates.append(MovieStorage.exportedVideoFileURL(projectId: project.id))
+
+        guard let url = candidates.first(where: { url in
+            if url.isFileURL {
+                return FileManager.default.fileExists(atPath: url.path)
+            }
+            return true
+        }) else {
             return
         }
-        
+
         player = AVPlayer(url: url)
     }
 }

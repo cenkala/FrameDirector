@@ -14,8 +14,10 @@ struct CaptureView: View {
     @Environment(\.dismiss) private var dismiss
     let project: MovieProject
     let targetStackId: String?
+    let lastFrameImage: UIImage?
     
     @State private var viewModel: CaptureViewModel?
+    @State private var overlayImage: UIImage?
     
     var body: some View {
         ZStack {
@@ -39,7 +41,11 @@ struct CaptureView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color.black)
             } else if let viewModel = viewModel, viewModel.isReady, let previewLayer = viewModel.previewLayer {
-                cameraPreview(previewLayer: previewLayer, showGrid: viewModel.showGrid)
+                cameraPreview(
+                    previewLayer: previewLayer,
+                    showGrid: viewModel.showGrid,
+                    overlayImage: overlayImage ?? lastFrameImage
+                )
             } else {
                 ProgressView()
             }
@@ -57,20 +63,36 @@ struct CaptureView: View {
             if viewModel == nil {
                 viewModel = CaptureViewModel(project: project, modelContext: modelContext, targetStackId: targetStackId)
             }
+            if overlayImage == nil {
+                overlayImage = lastFrameImage
+            }
         }
         .onDisappear {
             viewModel?.cleanup()
         }
+        .onChange(of: viewModel?.capturedImages.count) { oldValue, newValue in
+            // Update overlay to the last captured image when the count changes
+            overlayImage = viewModel?.capturedImages.last ?? lastFrameImage
+        }
     }
     
-    private func cameraPreview(previewLayer: AVCaptureVideoPreviewLayer, showGrid: Bool) -> some View {
-        ZStack {
-            CameraPreviewView(previewLayer: previewLayer)
-            
-            if showGrid {
-                GridOverlay()
+    private func cameraPreview(previewLayer: AVCaptureVideoPreviewLayer, showGrid: Bool, overlayImage: UIImage?) -> some View {
+        CameraPreviewView(previewLayer: previewLayer)
+            .overlay {
+                if let overlayImage {
+                    Image(uiImage: overlayImage)
+                        .resizable()
+                        .scaledToFill()
+                        .clipped()
+                        .opacity(0.35)
+                        .allowsHitTesting(false)
+                }
             }
-        }
+            .overlay {
+                if showGrid {
+                    GridOverlay()
+                }
+            }
     }
     
     private var topControls: some View {
@@ -154,6 +176,7 @@ struct CaptureView: View {
             .buttonStyle(.borderedProminent)
             .tint(.accentColor)
         }
+        .frame(maxWidth: .infinity)
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
@@ -163,6 +186,7 @@ struct CaptureView: View {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .strokeBorder(.white.opacity(0.12), lineWidth: 1)
         }
+        .padding(.horizontal, 16)
     }
     
     private func thumbnail(for image: UIImage) -> some View {
