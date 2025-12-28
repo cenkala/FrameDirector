@@ -20,6 +20,7 @@ final class CaptureViewModel {
     private let targetStackId: String?
     
     var capturedImages: [UIImage] = []
+    private var capturedFrameAssets: [FrameAsset] = []
     var isReady = false
     var errorMessage: String?
     var showGrid = false
@@ -74,20 +75,58 @@ final class CaptureViewModel {
     func toggleGrid() {
         showGrid.toggle()
     }
-    
-    private func handlePhotoCaptured(_ image: UIImage) {
-        capturedImages.append(image)
-        
-        Task {
-            await saveFrame(image)
+
+    func deleteCapturedImage(at index: Int) async {
+        guard index >= 0 && index < capturedImages.count && index < capturedFrameAssets.count else { return }
+
+        let frameAsset = capturedFrameAssets[index]
+
+        // Remove from arrays
+        await MainActor.run {
+            capturedImages.remove(at: index)
+            capturedFrameAssets.remove(at: index)
+        }
+
+        // Delete physical file
+        do {
+            try await MovieStorage.shared.deleteFrameFile(fileName: frameAsset.localFileName, projectId: project.id)
+        } catch {
+            await MainActor.run {
+                errorMessage = "Failed to delete file: \(error.localizedDescription)"
+            }
+        }
+
+        // Remove from database
+        await MainActor.run {
+            modelContext.delete(frameAsset)
+            project.frames.removeAll { $0.id == frameAsset.id }
+            normalizeFrameOrder()
+            project.updatedAt = Date()
+
+            do {
+                try modelContext.save()
+            } catch {
+                errorMessage = error.localizedDescription
+            }
         }
     }
     
-    private func saveFrame(_ image: UIImage) async {
+    private func handlePhotoCaptured(_ image: UIImage) {
+        capturedImages.append(image)
+
+        Task {
+            let frameAsset = await saveFrame(image)
+            if let frameAsset = frameAsset {
+                capturedFrameAssets.append(frameAsset)
+            }
+        }
+    }
+    
+    private func saveFrame(_ image: UIImage) async -> FrameAsset? {
         do {
             let fileName = "\(UUID().uuidString).jpg"
             _ = try await MovieStorage.shared.saveFrame(image, fileName: fileName, projectId: project.id)
-            
+
             let effectiveStackId = targetStackId ?? captureSessionId
             let insertionOrderIndex = calculateInsertionOrderIndex(for: effectiveStackId)
 
@@ -97,15 +136,17 @@ final class CaptureViewModel {
                 source: .capture,
                 stackId: effectiveStackId
             )
-            
+
             frameAsset.project = project
             modelContext.insert(frameAsset)
             project.frames.append(frameAsset)
             normalizeFrameOrder()
             project.updatedAt = Date()
             try modelContext.save()
+            return frameAsset
         } catch {
             errorMessage = error.localizedDescription
+            return nil
         }
     }
 

@@ -18,16 +18,37 @@ struct CaptureView: View {
     
     @State private var viewModel: CaptureViewModel?
     @State private var overlayImage: UIImage?
+    @AppStorage("showOverlay") private var showOverlay: Bool = true
+    @State private var toastMessage: String?
+    @State private var showToast = false
     
     var body: some View {
         ZStack {
+            // Toast overlay
+            if showToast, let message = toastMessage {
+                VStack {
+                    Text(message)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.black.opacity(0.8))
+                        )
+                    Spacer()
+                }
+                .padding(.top, 100)
+                .transition(.opacity)
+                .zIndex(1)
+            }
+
             if let viewModel = viewModel, let errorMessage = viewModel.errorMessage {
                 VStack(spacing: 12) {
                     Text(errorMessage)
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
-                    
+
                     Button {
                         dismiss()
                     } label: {
@@ -49,13 +70,23 @@ struct CaptureView: View {
             } else {
                 ProgressView()
             }
-            
+
+            HStack {
+                if let viewModel = viewModel, !viewModel.capturedImages.isEmpty {
+                    capturedImagesList(viewModel: viewModel)
+                }
+                Spacer()
+            }
+            .padding(.leading, 16)
+
             VStack {
                 topControls
                 Spacer()
                 bottomControls
             }
-            .padding()
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom)
         }
         .ignoresSafeArea()
         .tint(.accentColor)
@@ -79,7 +110,7 @@ struct CaptureView: View {
     private func cameraPreview(previewLayer: AVCaptureVideoPreviewLayer, showGrid: Bool, overlayImage: UIImage?) -> some View {
         CameraPreviewView(previewLayer: previewLayer)
             .overlay {
-                if let overlayImage {
+                if showOverlay, let overlayImage {
                     Image(uiImage: overlayImage)
                         .resizable()
                         .scaledToFill()
@@ -111,6 +142,21 @@ struct CaptureView: View {
             
             if let viewModel = viewModel {
                 Button {
+                    showOverlay.toggle()
+                    showToastMessage(showOverlay ? "Referans görüntü açıldı" : "Referans görüntü kapatıldı")
+                } label: {
+                    Image(systemName: showOverlay ? "eye" : "eye.slash")
+                        .font(.title2)
+                        .foregroundStyle(
+                            showOverlay
+                                ? AnyShapeStyle(.tint)
+                                : AnyShapeStyle(Color.white)
+                        )
+                        .padding()
+                        .background(Circle().fill(.ultraThinMaterial))
+                }
+
+                Button {
                     viewModel.toggleFlash()
                 } label: {
                     Image(systemName: flashIcon(for: viewModel.flashMode))
@@ -119,7 +165,7 @@ struct CaptureView: View {
                         .padding()
                         .background(Circle().fill(.ultraThinMaterial))
                 }
-                
+
                 Button {
                     viewModel.toggleGrid()
                 } label: {
@@ -138,68 +184,25 @@ struct CaptureView: View {
     }
     
     private var bottomControls: some View {
-        HStack(spacing: 12) {
-            if let viewModel = viewModel, !viewModel.capturedImages.isEmpty {
-                thumbnail(for: viewModel.capturedImages.last!)
-            } else {
-                Color.clear
-                    .frame(width: 52, height: 52)
+        Button {
+            viewModel?.capturePhoto()
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(.white.opacity(0.22))
+                    .frame(width: 76, height: 76)
+                Circle()
+                    .strokeBorder(.white.opacity(0.9), lineWidth: 3)
+                    .frame(width: 76, height: 76)
+                Circle()
+                    .fill(.white)
+                    .frame(width: 62, height: 62)
             }
-
-            Spacer()
-
-            Button {
-                viewModel?.capturePhoto()
-            } label: {
-                ZStack {
-                    Circle()
-                        .fill(.white.opacity(0.22))
-                        .frame(width: 76, height: 76)
-                    Circle()
-                        .strokeBorder(.white.opacity(0.9), lineWidth: 3)
-                        .frame(width: 76, height: 76)
-                    Circle()
-                        .fill(.white)
-                        .frame(width: 62, height: 62)
-                }
-            }
-            .buttonStyle(.plain)
-
-            Spacer()
-
-            Button {
-                dismiss()
-            } label: {
-                Text(LocalizedStringKey("capture.done"))
-                    .frame(width: 90)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.accentColor)
         }
-        .frame(maxWidth: .infinity)
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(.ultraThinMaterial)
-        )
-        .overlay {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .strokeBorder(.white.opacity(0.12), lineWidth: 1)
-        }
-        .padding(.horizontal, 16)
+        .buttonStyle(.plain)
+        .padding(.bottom, 34)
     }
     
-    private func thumbnail(for image: UIImage) -> some View {
-        Image(uiImage: image)
-            .resizable()
-            .scaledToFill()
-            .frame(width: 52, height: 52)
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .strokeBorder(.white.opacity(0.7), lineWidth: 1)
-            )
-    }
     
     private func flashIcon(for mode: AVCaptureDevice.FlashMode) -> String {
         switch mode {
@@ -208,6 +211,61 @@ struct CaptureView: View {
         case .auto: return "bolt.badge.automatic.fill"
         @unknown default: return "bolt.slash.fill"
         }
+    }
+
+    private func showToastMessage(_ message: String) {
+        toastMessage = message
+        showToast = true
+
+        // Hide toast after 2 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            withAnimation {
+                showToast = false
+            }
+        }
+    }
+
+    private func capturedImagesList(viewModel: CaptureViewModel) -> some View {
+        ScrollView {
+            VStack(spacing: 8) {
+                ForEach(Array(viewModel.capturedImages.enumerated()), id: \.offset) { index, image in
+                    ZStack(alignment: .topTrailing) {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 60, height: 60)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .strokeBorder(
+                                        index == viewModel.capturedImages.count - 1
+                                            ? Color.blue.opacity(0.8)
+                                            : Color.white.opacity(0.7),
+                                        lineWidth: index == viewModel.capturedImages.count - 1 ? 2 : 1
+                                    )
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+                        Button {
+                            Task {
+                                await viewModel.deleteCapturedImage(at: index)
+                            }
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 16))
+                                .foregroundStyle(.white, .red.opacity(0.8))
+                                .background(Circle().fill(.black.opacity(0.6)))
+                        }
+                        .offset(x: 4, y: -8)
+                    }
+                    .frame(width: 68, height: 68)
+                }
+            }
+            .padding(.vertical, 20)
+        }
+        .scrollIndicators(.hidden)
+        .padding(.top, 60)
+        .padding(.bottom, 120)
+        .frame(maxHeight: .infinity)
     }
 }
 
