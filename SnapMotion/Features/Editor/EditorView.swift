@@ -69,19 +69,7 @@ struct EditorView: View {
                     .transition(.opacity)
             }
         }
-        .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarBackground(
-            LinearGradient(
-                colors: [
-                    AppTheme.Colors.elevatedSurface.opacity(0.8),
-                    AppTheme.Colors.elevatedSurface.opacity(0.6)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            ),
-            for: .navigationBar
-        )
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button {

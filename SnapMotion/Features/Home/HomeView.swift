@@ -28,6 +28,7 @@ struct HomeView: View {
                 }
             }
             .navigationTitle("")
+            .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
