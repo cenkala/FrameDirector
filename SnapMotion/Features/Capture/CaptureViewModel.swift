@@ -9,6 +9,7 @@ import Foundation
 import SwiftUI
 import SwiftData
 import AVFoundation
+import AVFAudio
 
 @MainActor
 @Observable
@@ -24,6 +25,11 @@ final class CaptureViewModel {
     var isReady = false
     var errorMessage: String?
     var showGrid = false
+    var voiceCommandEnabled = false
+    var isCapturingPhoto = false
+    private let voiceCommandThreshold: Float = -30.0
+    private var audioRecorder: AVAudioRecorder?
+    private var voiceCommandTimer: Timer?
     
     var previewLayer: AVCaptureVideoPreviewLayer? {
         cameraService.previewLayer
@@ -37,7 +43,9 @@ final class CaptureViewModel {
         self.project = project
         self.modelContext = modelContext
         self.targetStackId = targetStackId
+        self.voiceCommandEnabled = UserDefaults.standard.bool(forKey: "voiceCommandEnabled")
         setupCamera()
+        applyVoiceCommandPreference()
     }
     
     private func setupCamera() {
@@ -65,6 +73,8 @@ final class CaptureViewModel {
     }
     
     func capturePhoto() {
+        guard !isCapturingPhoto else { return }
+        isCapturingPhoto = true
         cameraService.capturePhoto()
     }
     
@@ -74,6 +84,102 @@ final class CaptureViewModel {
     
     func toggleGrid() {
         showGrid.toggle()
+    }
+
+    func toggleVoiceCommand() {
+        voiceCommandEnabled.toggle()
+        persistVoiceCommandPreference()
+        applyVoiceCommandPreference()
+    }
+
+    func applyVoiceCommandPreference() {
+        if voiceCommandEnabled {
+            startVoiceCommandListening()
+        } else {
+            stopVoiceCommandListening()
+        }
+    }
+
+    private func persistVoiceCommandPreference() {
+        UserDefaults.standard.set(voiceCommandEnabled, forKey: "voiceCommandEnabled")
+    }
+
+    private func startVoiceCommandListening() {
+        guard voiceCommandEnabled else { return }
+
+        // Request microphone permission
+        AVAudioSession.sharedInstance().requestRecordPermission { [weak self] granted in
+            guard let self = self else { return }
+
+            if granted {
+                DispatchQueue.main.async {
+                    self.setupAudioRecorder()
+                }
+            } else {
+                DispatchQueue.main.async {
+                    self.errorMessage = "Mikrofon izni gerekli. Ses komutu özelliği için lütfen ayarlardan mikrofon iznini verin."
+                    self.voiceCommandEnabled = false
+                    self.persistVoiceCommandPreference()
+                }
+            }
+        }
+    }
+
+    private func setupAudioRecorder() {
+        let audioSession = AVAudioSession.sharedInstance()
+
+        do {
+            try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
+            try audioSession.setActive(true)
+
+            let settings: [String: Any] = [
+                AVFormatIDKey: Int(kAudioFormatAppleLossless),
+                AVSampleRateKey: 44100.0,
+                AVNumberOfChannelsKey: 1,
+                AVEncoderAudioQualityKey: AVAudioQuality.min.rawValue
+            ]
+
+            let tempURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("tempAudio.caf")
+            audioRecorder = try AVAudioRecorder(url: tempURL, settings: settings)
+            audioRecorder?.isMeteringEnabled = true
+            audioRecorder?.record()
+
+            // Start monitoring audio levels
+            voiceCommandTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+                self?.checkAudioLevel()
+            }
+
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = "Ses dinleme başlatılamadı: \(error.localizedDescription)"
+                self.voiceCommandEnabled = false
+                self.persistVoiceCommandPreference()
+            }
+        }
+    }
+
+    private func checkAudioLevel() {
+        audioRecorder?.updateMeters()
+        if let level = audioRecorder?.averagePower(forChannel: 0), level > voiceCommandThreshold {
+            // Voice command detected, capture photo
+            DispatchQueue.main.async {
+                self.capturePhoto()
+            }
+        }
+    }
+
+    private func stopVoiceCommandListening() {
+        voiceCommandTimer?.invalidate()
+        voiceCommandTimer = nil
+
+        audioRecorder?.stop()
+        audioRecorder = nil
+
+        do {
+            try AVAudioSession.sharedInstance().setActive(false)
+        } catch {
+            print("Audio session deactive error: \(error)")
+        }
     }
 
     func deleteCapturedImage(at index: Int) async {
@@ -117,7 +223,14 @@ final class CaptureViewModel {
         Task {
             let frameAsset = await saveFrame(image)
             if let frameAsset = frameAsset {
-                capturedFrameAssets.append(frameAsset)
+                await MainActor.run {
+                    capturedFrameAssets.append(frameAsset)
+                    isCapturingPhoto = false
+                }
+            } else {
+                await MainActor.run {
+                    isCapturingPhoto = false
+                }
             }
         }
     }
@@ -168,6 +281,7 @@ final class CaptureViewModel {
     
     func cleanup() {
         cameraService.stopSession()
+        stopVoiceCommandListening()
     }
 }
 

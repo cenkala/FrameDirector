@@ -93,6 +93,7 @@ struct CaptureView: View {
         .onAppear {
             if viewModel == nil {
                 viewModel = CaptureViewModel(project: project, modelContext: modelContext, targetStackId: targetStackId)
+                viewModel?.applyVoiceCommandPreference()
             }
             if overlayImage == nil {
                 overlayImage = lastFrameImage
@@ -157,6 +158,25 @@ struct CaptureView: View {
                 }
 
                 Button {
+                    viewModel.toggleVoiceCommand()
+                    if viewModel.voiceCommandEnabled {
+                        showToastMessage("Ses komutu açıldı - Yüksek sesle fotoğraf çekebilirsiniz")
+                    } else {
+                        showToastMessage("Ses komutu kapatıldı")
+                    }
+                } label: {
+                    Image(systemName: viewModel.voiceCommandEnabled ? "mic" : "mic.slash")
+                        .font(.title2)
+                        .foregroundStyle(
+                            viewModel.voiceCommandEnabled
+                                ? AnyShapeStyle(.tint)
+                                : AnyShapeStyle(Color.white)
+                        )
+                        .padding()
+                        .background(Circle().fill(.ultraThinMaterial))
+                }
+
+                Button {
                     viewModel.toggleFlash()
                 } label: {
                     Image(systemName: flashIcon(for: viewModel.flashMode))
@@ -197,6 +217,13 @@ struct CaptureView: View {
                 Circle()
                     .fill(.white)
                     .frame(width: 62, height: 62)
+
+                if viewModel?.isCapturingPhoto == true {
+                    Circle()
+                        .strokeBorder(Color.accentColor, lineWidth: 3)
+                        .frame(width: 76, height: 76)
+                        .opacity(0.8)
+                }
             }
         }
         .buttonStyle(.plain)
@@ -226,46 +253,55 @@ struct CaptureView: View {
     }
 
     private func capturedImagesList(viewModel: CaptureViewModel) -> some View {
-        ScrollView {
-            VStack(spacing: 8) {
-                ForEach(Array(viewModel.capturedImages.enumerated()), id: \.offset) { index, image in
-                    ZStack(alignment: .topTrailing) {
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 60, height: 60)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .strokeBorder(
-                                        index == viewModel.capturedImages.count - 1
-                                            ? Color.blue.opacity(0.8)
-                                            : Color.white.opacity(0.7),
-                                        lineWidth: index == viewModel.capturedImages.count - 1 ? 2 : 1
-                                    )
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 8) {
+                    ForEach(Array(viewModel.capturedImages.enumerated()), id: \.offset) { index, image in
+                        ZStack(alignment: .topTrailing) {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 60, height: 60)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .strokeBorder(
+                                            index == viewModel.capturedImages.count - 1
+                                                ? Color.blue.opacity(0.8)
+                                                : Color.white.opacity(0.7),
+                                            lineWidth: index == viewModel.capturedImages.count - 1 ? 2 : 1
+                                        )
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
 
-                        Button {
-                            Task {
-                                await viewModel.deleteCapturedImage(at: index)
+                            Button {
+                                Task {
+                                    await viewModel.deleteCapturedImage(at: index)
+                                }
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(.white, .red.opacity(0.8))
+                                    .background(Circle().fill(.black.opacity(0.6)))
                             }
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 16))
-                                .foregroundStyle(.white, .red.opacity(0.8))
-                                .background(Circle().fill(.black.opacity(0.6)))
+                            .offset(x: 4, y: -8)
                         }
-                        .offset(x: 4, y: -8)
+                        .frame(width: 68, height: 68)
+                        .id(index)
                     }
-                    .frame(width: 68, height: 68)
+                }
+                .padding(.vertical, 20)
+            }
+            .scrollIndicators(.hidden)
+            .padding(.top, 60)
+            .padding(.bottom, 120)
+            .frame(maxHeight: .infinity)
+            .onChange(of: viewModel.capturedImages.count) { _, newValue in
+                guard newValue > 0 else { return }
+                withAnimation(.easeOut(duration: 0.25)) {
+                    proxy.scrollTo(newValue - 1, anchor: .bottom)
                 }
             }
-            .padding(.vertical, 20)
         }
-        .scrollIndicators(.hidden)
-        .padding(.top, 60)
-        .padding(.bottom, 120)
-        .frame(maxHeight: .infinity)
     }
 }
 
