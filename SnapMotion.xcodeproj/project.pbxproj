@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		05A2C3602F009A8800FE7D6D /* ReceiptParser in Frameworks */ = {isa = PBXBuildFile; productRef = 05A2C35F2F009A8800FE7D6D /* ReceiptParser */; };
+		05A2C3622F009A8800FE7D6D /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 05A2C3612F009A8800FE7D6D /* RevenueCat */; };
+		05A2C3642F009A8800FE7D6D /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 05A2C3632F009A8800FE7D6D /* RevenueCatUI */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		05732DC92F00868600EE7291 /* SnapMotion.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SnapMotion.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +29,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				05A2C3622F009A8800FE7D6D /* RevenueCat in Frameworks */,
+				05A2C3602F009A8800FE7D6D /* ReceiptParser in Frameworks */,
+				05A2C3642F009A8800FE7D6D /* RevenueCatUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +74,9 @@
 			);
 			name = SnapMotion;
 			packageProductDependencies = (
+				05A2C35F2F009A8800FE7D6D /* ReceiptParser */,
+				05A2C3612F009A8800FE7D6D /* RevenueCat */,
+				05A2C3632F009A8800FE7D6D /* RevenueCatUI */,
 			);
 			productName = SnapMotion;
 			productReference = 05732DC92F00868600EE7291 /* SnapMotion.app */;
@@ -91,9 +103,15 @@
 			knownRegions = (
 				en,
 				Base,
+				tr,
+				de,
+				es,
 			);
 			mainGroup = 05732DC02F00868600EE7291;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				05A2C35E2F009A8800FE7D6D /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 05732DCA2F00868600EE7291 /* Products */;
 			projectDirPath = "";
@@ -254,6 +272,8 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "For you to use the photo or video taken for your stop motion movie.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "For saving the video that you create";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -298,6 +318,8 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "For you to use the photo or video taken for your stop motion movie.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "For saving the video that you create";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -351,6 +373,35 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		05A2C35E2F009A8800FE7D6D /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.52.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		05A2C35F2F009A8800FE7D6D /* ReceiptParser */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 05A2C35E2F009A8800FE7D6D /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = ReceiptParser;
+		};
+		05A2C3612F009A8800FE7D6D /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 05A2C35E2F009A8800FE7D6D /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCat;
+		};
+		05A2C3632F009A8800FE7D6D /* RevenueCatUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 05A2C35E2F009A8800FE7D6D /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCatUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 05732DC12F00868600EE7291 /* Project object */;
 }

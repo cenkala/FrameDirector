@@ -1,0 +1,46 @@
+//
+//  PaywallPresenter.swift
+//  SnapMotion
+//
+//  Created by Cenk Alasonyalilar on 28.12.2025.
+//
+
+import SwiftUI
+
+@Observable
+final class PaywallPresenter {
+    static let shared = PaywallPresenter()
+    
+    private let hasShownInitialPaywallKey = "hasShownInitialPaywall"
+    
+    var shouldShowPaywall: Bool = false
+    
+    var hasShownInitialPaywall: Bool {
+        get {
+            UserDefaults.standard.bool(forKey: hasShownInitialPaywallKey)
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: hasShownInitialPaywallKey)
+        }
+    }
+    
+    private init() {}
+    
+    func showPaywallIfNeeded() {
+        if !hasShownInitialPaywall {
+            shouldShowPaywall = true
+        }
+    }
+    
+    func presentPaywall() {
+        shouldShowPaywall = true
+    }
+    
+    func dismissPaywall() {
+        shouldShowPaywall = false
+        if !hasShownInitialPaywall {
+            hasShownInitialPaywall = true
+        }
+    }
+}
+

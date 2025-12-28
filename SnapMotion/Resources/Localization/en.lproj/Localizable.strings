@@ -1,0 +1,128 @@
+/* General */
+"app.name" = "Frame Director";
+"general.ok" = "OK";
+"general.cancel" = "Cancel";
+"general.done" = "Done";
+"general.delete" = "Delete";
+"general.edit" = "Edit";
+"general.save" = "Save";
+"general.close" = "Close";
+"general.retry" = "Retry";
+
+/* Home Screen */
+"home.title" = "Frame Director";
+"home.newProject" = "New Project";
+"home.createStopMotion" = "Create a new stop-motion video";
+"home.myProjects" = "My Projects";
+"home.noSavedProjects" = "No saved projects";
+"home.guide" = "Guide";
+"home.emptyState.title" = "No Projects Yet";
+"home.emptyState.message" = "Create your first stop-motion project";
+"home.project.play" = "Play";
+"home.project.edit" = "Edit";
+
+/* Settings */
+"settings.title" = "Settings";
+"settings.language" = "Language";
+"settings.restorePurchases" = "Restore Purchases";
+"settings.version" = "Version";
+"settings.membership" = "Membership";
+"settings.membership.pro" = "PRO";
+"settings.membership.free" = "Free";
+"settings.membership.manage" = "Manage Subscription";
+"settings.membership.refresh" = "Refresh";
+"settings.membership.expires" = "Renews / Expires";
+
+/* Create Project Flow */
+"create.title" = "Create Project";
+"create.capture" = "Capture";
+"create.import" = "Import";
+"create.camera" = "Camera";
+"create.photoLibrary" = "Photo Library";
+
+/* Capture */
+"capture.title" = "Capture";
+"capture.takePhoto" = "Take Photo";
+"capture.recordVideo" = "Record Video";
+"capture.flash" = "Flash";
+"capture.grid" = "Grid";
+"capture.done" = "Done";
+
+/* Import */
+"import.title" = "Import";
+"import.selectPhotos" = "Select Photos";
+"import.selectVideos" = "Select Videos";
+"import.processing" = "Processing...";
+
+/* Editor */
+"editor.title" = "Editor";
+"editor.fps" = "FPS";
+"editor.play" = "Play";
+"editor.pause" = "Pause";
+"editor.addFrame" = "Add Frame";
+"editor.frames" = "Frames";
+"editor.noFrames" = "No frames yet";
+"editor.exporting" = "Exporting...";
+"editor.deleteFrame" = "Delete Frame";
+"editor.duplicateFrame" = "Duplicate Frame";
+"editor.export" = "Export";
+"editor.titleCredits" = "Title & Credits";
+"editor.freeLimit" = "Free users: max 5 seconds";
+"editor.proFeature" = "Pro Feature";
+
+/* Title & Credits */
+"titleCredits.title" = "Title & Credits";
+"titleCredits.titleCard" = "Title Card";
+"titleCredits.titlePlaceholder" = "Enter title...";
+"titleCredits.credits" = "Credits";
+"titleCredits.creditsMode" = "Credits Mode";
+"titleCredits.plainCredits" = "Plain Text";
+"titleCredits.structuredCredits" = "Structured";
+"titleCredits.plainPlaceholder" = "Enter credits...";
+"titleCredits.director" = "Director";
+"titleCredits.animator" = "Animator";
+"titleCredits.music" = "Music";
+"titleCredits.thanks" = "Thanks";
+
+/* Player */
+"player.title" = "Player";
+"player.share" = "Share";
+"player.loadingVideo" = "Loading video...";
+
+/* Paywall */
+"paywall.title" = "Unlock Pro Features";
+"paywall.hero.beforePro" = "Go";
+"paywall.hero.afterPro" = "with Frame Director";
+"paywall.feature.unlimitedProjects" = "Unlimited Projects";
+"paywall.feature.noTimeLimit" = "No Time Limit";
+"paywall.feature.videoExport" = "Video Export";
+"paywall.feature.imageExport" = "Image Export";
+"paywall.feature.structuredCredits" = "Structured Credits";
+"paywall.feature.deleteProjects" = "Delete Projects";
+"paywall.subscribe" = "Subscribe";
+"paywall.restore" = "Restore Purchases";
+"paywall.redeemCode" = "Redeem promotion code";
+"paywall.termsOfService" = "Terms of Service";
+"paywall.privacyPolicy" = "Privacy Policy";
+"paywall.noPackages" = "No subscription options available right now.";
+
+/* Pro Features */
+"pro.locked" = "Pro Feature";
+"pro.unlockMessage" = "Upgrade to Pro to unlock this feature";
+"pro.upgrade" = "Upgrade to Pro";
+
+/* Errors */
+"error.general" = "An error occurred";
+"error.cameraPermission" = "Camera permission is required";
+"error.photoLibraryPermission" = "Photo library permission is required";
+"error.exportFailed" = "Export failed";
+"error.importFailed" = "Import failed";
+"error.projectLimit" = "Free users can only create 1 project";
+"error.cannotDelete" = "Free users cannot delete projects";
+
+/* Permissions */
+"permission.camera.title" = "Camera Access Required";
+"permission.camera.message" = "Frame Director needs camera access to capture photos and videos for your stop-motion projects.";
+"permission.photoLibrary.title" = "Photo Library Access Required";
+"permission.photoLibrary.message" = "Frame Director needs photo library access to import photos and videos.";
+

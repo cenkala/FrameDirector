@@ -1,0 +1,128 @@
+/* General */
+"app.name" = "Frame Director";
+"general.ok" = "OK";
+"general.cancel" = "Abbrechen";
+"general.done" = "Fertig";
+"general.delete" = "Löschen";
+"general.edit" = "Bearbeiten";
+"general.save" = "Speichern";
+"general.close" = "Schließen";
+"general.retry" = "Erneut versuchen";
+
+/* Home Screen */
+"home.title" = "Frame Director";
+"home.newProject" = "Neues Projekt";
+"home.createStopMotion" = "Neues Stop-Motion-Video erstellen";
+"home.myProjects" = "Meine Projekte";
+"home.noSavedProjects" = "Keine gespeicherten Projekte";
+"home.guide" = "Anleitung";
+"home.emptyState.title" = "Noch keine Projekte";
+"home.emptyState.message" = "Erstellen Sie Ihr erstes Stop-Motion-Projekt";
+"home.project.play" = "Abspielen";
+"home.project.edit" = "Bearbeiten";
+
+/* Settings */
+"settings.title" = "Einstellungen";
+"settings.language" = "Sprache";
+"settings.restorePurchases" = "Käufe wiederherstellen";
+"settings.version" = "Version";
+"settings.membership" = "Mitgliedschaft";
+"settings.membership.pro" = "PRO";
+"settings.membership.free" = "Kostenlos";
+"settings.membership.manage" = "Abo verwalten";
+"settings.membership.refresh" = "Aktualisieren";
+"settings.membership.expires" = "Verlängerung / Ablauf";
+
+/* Create Project Flow */
+"create.title" = "Projekt erstellen";
+"create.capture" = "Aufnehmen";
+"create.import" = "Importieren";
+"create.camera" = "Kamera";
+"create.photoLibrary" = "Fotobibliothek";
+
+/* Capture */
+"capture.title" = "Aufnahme";
+"capture.takePhoto" = "Foto aufnehmen";
+"capture.recordVideo" = "Video aufnehmen";
+"capture.flash" = "Blitz";
+"capture.grid" = "Raster";
+"capture.done" = "Fertig";
+
+/* Import */
+"import.title" = "Importieren";
+"import.selectPhotos" = "Fotos auswählen";
+"import.selectVideos" = "Videos auswählen";
+"import.processing" = "Wird verarbeitet...";
+
+/* Editor */
+"editor.title" = "Editor";
+"editor.fps" = "FPS";
+"editor.play" = "Abspielen";
+"editor.pause" = "Pause";
+"editor.addFrame" = "Frame hinzufügen";
+"editor.frames" = "Frames";
+"editor.noFrames" = "Noch keine Frames";
+"editor.exporting" = "Wird exportiert...";
+"editor.deleteFrame" = "Frame löschen";
+"editor.duplicateFrame" = "Frame duplizieren";
+"editor.export" = "Exportieren";
+"editor.titleCredits" = "Titel & Abspann";
+"editor.freeLimit" = "Kostenlose Nutzer: max 5 Sekunden";
+"editor.proFeature" = "Pro-Funktion";
+
+/* Title & Credits */
+"titleCredits.title" = "Titel & Abspann";
+"titleCredits.titleCard" = "Titelkarte";
+"titleCredits.titlePlaceholder" = "Titel eingeben...";
+"titleCredits.credits" = "Abspann";
+"titleCredits.creditsMode" = "Abspann-Modus";
+"titleCredits.plainCredits" = "Einfacher Text";
+"titleCredits.structuredCredits" = "Strukturiert";
+"titleCredits.plainPlaceholder" = "Abspann eingeben...";
+"titleCredits.director" = "Regie";
+"titleCredits.animator" = "Animator";
+"titleCredits.music" = "Musik";
+"titleCredits.thanks" = "Danksagungen";
+
+/* Player */
+"player.title" = "Player";
+"player.share" = "Teilen";
+"player.loadingVideo" = "Video wird geladen...";
+
+/* Paywall */
+"paywall.title" = "Pro-Funktionen freischalten";
+"paywall.hero.beforePro" = "Werde";
+"paywall.hero.afterPro" = "mit Frame Director";
+"paywall.feature.unlimitedProjects" = "Unbegrenzte Projekte";
+"paywall.feature.noTimeLimit" = "Keine Zeitbeschränkung";
+"paywall.feature.videoExport" = "Video-Export";
+"paywall.feature.imageExport" = "Bild-Export";
+"paywall.feature.structuredCredits" = "Strukturierter Abspann";
+"paywall.feature.deleteProjects" = "Projekte löschen";
+"paywall.subscribe" = "Abonnieren";
+"paywall.restore" = "Käufe wiederherstellen";
+"paywall.redeemCode" = "Promo-Code einlösen";
+"paywall.termsOfService" = "Nutzungsbedingungen";
+"paywall.privacyPolicy" = "Datenschutzerklärung";
+"paywall.noPackages" = "Derzeit sind keine Abonnements verfügbar.";
+
+/* Pro Features */
+"pro.locked" = "Pro-Funktion";
+"pro.unlockMessage" = "Upgraden Sie auf Pro, um diese Funktion freizuschalten";
+"pro.upgrade" = "Auf Pro upgraden";
+
+/* Errors */
+"error.general" = "Ein Fehler ist aufgetreten";
+"error.cameraPermission" = "Kameraberechtigung erforderlich";
+"error.photoLibraryPermission" = "Fotobibliothek-Berechtigung erforderlich";
+"error.exportFailed" = "Export fehlgeschlagen";
+"error.importFailed" = "Import fehlgeschlagen";
+"error.projectLimit" = "Kostenlose Nutzer können nur 1 Projekt erstellen";
+"error.cannotDelete" = "Kostenlose Nutzer können keine Projekte löschen";
+
+/* Permissions */
+"permission.camera.title" = "Kamerazugriff erforderlich";
+"permission.camera.message" = "Frame Director benötigt Kamerazugriff, um Fotos und Videos für Ihre Stop-Motion-Projekte aufzunehmen.";
+"permission.photoLibrary.title" = "Fotobibliothek-Zugriff erforderlich";
+"permission.photoLibrary.message" = "Frame Director benötigt Zugriff auf die Fotobibliothek, um Fotos und Videos zu importieren.";
+

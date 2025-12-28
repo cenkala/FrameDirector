@@ -10,9 +10,13 @@ import SwiftData
 
 @main
 struct SnapMotionApp: App {
+    @State private var languageManager = LanguageManager.shared
+    @State private var entitlementService = EntitlementService.shared
+    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            MovieProject.self,
+            FrameAsset.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -22,10 +26,15 @@ struct SnapMotionApp: App {
             fatalError("Could not create ModelContainer: \(error)")
         }
     }()
+    
+    init() {
+        EntitlementService.shared.configure()
+    }
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            HomeView()
+                .environment(\.locale, languageManager.locale)
         }
         .modelContainer(sharedModelContainer)
     }

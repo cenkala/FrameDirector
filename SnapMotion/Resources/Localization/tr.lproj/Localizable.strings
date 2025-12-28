@@ -1,0 +1,128 @@
+/* General */
+"app.name" = "Frame Director";
+"general.ok" = "Tamam";
+"general.cancel" = "İptal";
+"general.done" = "Bitti";
+"general.delete" = "Sil";
+"general.edit" = "Düzenle";
+"general.save" = "Kaydet";
+"general.close" = "Kapat";
+"general.retry" = "Tekrar Dene";
+
+/* Home Screen */
+"home.title" = "Frame Director";
+"home.newProject" = "Yeni Proje";
+"home.createStopMotion" = "Yeni stop-motion videonu oluştur";
+"home.myProjects" = "Projelerim";
+"home.noSavedProjects" = "Kayıtlı proje yok";
+"home.guide" = "Rehber";
+"home.emptyState.title" = "Henüz Proje Yok";
+"home.emptyState.message" = "İlk stop-motion projenizi oluşturun";
+"home.project.play" = "Oynat";
+"home.project.edit" = "Düzenle";
+
+/* Settings */
+"settings.title" = "Ayarlar";
+"settings.language" = "Dil";
+"settings.restorePurchases" = "Satın Alımları Geri Yükle";
+"settings.version" = "Sürüm";
+"settings.membership" = "Üyelik";
+"settings.membership.pro" = "PRO";
+"settings.membership.free" = "Ücretsiz";
+"settings.membership.manage" = "Aboneliği Yönet";
+"settings.membership.refresh" = "Yenile";
+"settings.membership.expires" = "Yenileme / Bitiş";
+
+/* Create Project Flow */
+"create.title" = "Proje Oluştur";
+"create.capture" = "Çek";
+"create.import" = "İçe Aktar";
+"create.camera" = "Kamera";
+"create.photoLibrary" = "Fotoğraf Arşivi";
+
+/* Capture */
+"capture.title" = "Çekim";
+"capture.takePhoto" = "Fotoğraf Çek";
+"capture.recordVideo" = "Video Kaydet";
+"capture.flash" = "Flaş";
+"capture.grid" = "Izgara";
+"capture.done" = "Bitti";
+
+/* Import */
+"import.title" = "İçe Aktar";
+"import.selectPhotos" = "Fotoğraf Seç";
+"import.selectVideos" = "Video Seç";
+"import.processing" = "İşleniyor...";
+
+/* Editor */
+"editor.title" = "Editör";
+"editor.fps" = "FPS";
+"editor.play" = "Oynat";
+"editor.pause" = "Duraklat";
+"editor.addFrame" = "Kare Ekle";
+"editor.frames" = "Kareler";
+"editor.noFrames" = "Henüz kare yok";
+"editor.exporting" = "Dışa aktarılıyor...";
+"editor.deleteFrame" = "Kare Sil";
+"editor.duplicateFrame" = "Kare Kopyala";
+"editor.export" = "Dışa Aktar";
+"editor.titleCredits" = "Başlık & Jenerik";
+"editor.freeLimit" = "Ücretsiz kullanıcılar: max 5 saniye";
+"editor.proFeature" = "Pro Özellik";
+
+/* Title & Credits */
+"titleCredits.title" = "Başlık & Jenerik";
+"titleCredits.titleCard" = "Başlık Kartı";
+"titleCredits.titlePlaceholder" = "Başlık girin...";
+"titleCredits.credits" = "Jenerik";
+"titleCredits.creditsMode" = "Jenerik Modu";
+"titleCredits.plainCredits" = "Düz Metin";
+"titleCredits.structuredCredits" = "Yapılandırılmış";
+"titleCredits.plainPlaceholder" = "Jenerik girin...";
+"titleCredits.director" = "Yönetmen";
+"titleCredits.animator" = "Animatör";
+"titleCredits.music" = "Müzik";
+"titleCredits.thanks" = "Teşekkürler";
+
+/* Player */
+"player.title" = "Oynatıcı";
+"player.share" = "Paylaş";
+"player.loadingVideo" = "Video yükleniyor...";
+
+/* Paywall */
+"paywall.title" = "Pro Özelliklerin Kilidini Aç";
+"paywall.hero.beforePro" = "Frame Director";
+"paywall.hero.afterPro" = "ol";
+"paywall.feature.unlimitedProjects" = "Sınırsız Proje";
+"paywall.feature.noTimeLimit" = "Zaman Limiti Yok";
+"paywall.feature.videoExport" = "Video Dışa Aktarma";
+"paywall.feature.imageExport" = "Görsel Dışa Aktarma";
+"paywall.feature.structuredCredits" = "Yapılandırılmış Jenerik";
+"paywall.feature.deleteProjects" = "Proje Silme";
+"paywall.subscribe" = "Abone Ol";
+"paywall.restore" = "Satın Alımları Geri Yükle";
+"paywall.redeemCode" = "Promosyon kodu kullan";
+"paywall.termsOfService" = "Kullanım Koşulları";
+"paywall.privacyPolicy" = "Gizlilik Politikası";
+"paywall.noPackages" = "Şu anda abonelik seçeneği bulunamadı.";
+
+/* Pro Features */
+"pro.locked" = "Pro Özellik";
+"pro.unlockMessage" = "Bu özelliğin kilidini açmak için Pro'ya yükseltin";
+"pro.upgrade" = "Pro'ya Yükselt";
+
+/* Errors */
+"error.general" = "Bir hata oluştu";
+"error.cameraPermission" = "Kamera izni gerekli";
+"error.photoLibraryPermission" = "Fotoğraf arşivi izni gerekli";
+"error.exportFailed" = "Dışa aktarma başarısız";
+"error.importFailed" = "İçe aktarma başarısız";
+"error.projectLimit" = "Ücretsiz kullanıcılar sadece 1 proje oluşturabilir";
+"error.cannotDelete" = "Ücretsiz kullanıcılar proje silemez";
+
+/* Permissions */
+"permission.camera.title" = "Kamera Erişimi Gerekli";
+"permission.camera.message" = "Frame Director'ın stop-motion projeleriniz için fotoğraf ve video çekebilmesi için kamera erişimine ihtiyacı var.";
+"permission.photoLibrary.title" = "Fotoğraf Arşivi Erişimi Gerekli";
+"permission.photoLibrary.message" = "Frame Director'ın fotoğraf ve video içe aktarabilmesi için fotoğraf arşivi erişimine ihtiyacı var.";
+
