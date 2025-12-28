@@ -13,6 +13,7 @@ struct ProjectCardView: View {
     let onPlay: () -> Void
     let onEdit: () -> Void
     let onDelete: () -> Void
+    let onRequestDeleteUpgrade: () -> Void
     let canDelete: Bool
 
     @State private var thumbnailImage: UIImage?
@@ -49,41 +50,7 @@ struct ProjectCardView: View {
                 }
             }
 
-            HStack(spacing: 10) {
-                Button {
-                    onEdit()
-                } label: {
-                    Label(LocalizedStringKey("home.project.edit"), systemImage: "pencil")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(.accentColor)
-
-                if hasPlayableVideo {
-                    Button {
-                        onPlay()
-                    } label: {
-                        Image(systemName: "play.fill")
-                            .font(.headline.weight(.semibold))
-                            .frame(width: 44, height: 36)
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(.accentColor)
-                }
-
-                Button(role: .destructive) {
-                    if canDelete {
-                        onDelete()
-                    }
-                } label: {
-                    Image(systemName: "trash")
-                        .font(.headline.weight(.semibold))
-                        .frame(width: 44, height: 36)
-                }
-                .buttonStyle(.bordered)
-                .tint(AppTheme.Colors.destructive)
-                .disabled(!canDelete)
-            }
+            actionRow
         }
         .appCard()
         .task(id: project.id) {
@@ -109,6 +76,40 @@ struct ProjectCardView: View {
         }
     }
 
+    private var actionRow: some View {
+        HStack(spacing: 10) {
+            ProjectCardActionButton(
+                title: LocalizedStringKey("home.project.edit"),
+                systemImage: "pencil",
+                style: .prominent
+            ) {
+                onEdit()
+            }
+
+            if hasPlayableVideo {
+                ProjectCardActionButton(
+                    title: LocalizedStringKey("home.project.play"),
+                    systemImage: "play.fill",
+                    style: .regular
+                ) {
+                    onPlay()
+                }
+            }
+
+            ProjectCardActionButton(
+                title: LocalizedStringKey("general.delete"),
+                systemImage: "trash",
+                style: canDelete ? .destructive : .proLocked
+            ) {
+                if canDelete {
+                    onDelete()
+                } else {
+                    onRequestDeleteUpgrade()
+                }
+            }
+        }
+    }
+
     private func loadThumbnailIfNeeded() async {
         guard thumbnailImage == nil else { return }
 
@@ -116,6 +117,102 @@ struct ProjectCardView: View {
         guard let firstFrame else { return }
 
         thumbnailImage = await MovieStorage.shared.loadFrame(fileName: firstFrame.localFileName, projectId: project.id)
+    }
+}
+
+private struct ProjectCardActionButton: View {
+    enum Style {
+        case prominent
+        case regular
+        case destructive
+        case proLocked
+    }
+
+    let title: LocalizedStringKey
+    let systemImage: String
+    let style: Style
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: systemImage)
+                    .font(.subheadline.weight(.semibold))
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 40)
+            .contentShape(RoundedRectangle(cornerRadius: AppTheme.Metrics.controlCornerRadius, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(foregroundStyle)
+        .background(backgroundView)
+        .overlay(overlayView)
+        .accessibilityLabel(title)
+    }
+
+    private var foregroundStyle: AnyShapeStyle {
+        switch style {
+        case .prominent:
+            return AnyShapeStyle(Color.white)
+        case .regular:
+            return AnyShapeStyle(Color.accentColor)
+        case .destructive:
+            return AnyShapeStyle(AppTheme.Colors.destructive)
+        case .proLocked:
+            return AnyShapeStyle(proGradient)
+        }
+    }
+
+    @ViewBuilder
+    private var backgroundView: some View {
+        switch style {
+        case .prominent:
+            RoundedRectangle(cornerRadius: AppTheme.Metrics.controlCornerRadius, style: .continuous)
+                .fill(Color.accentColor)
+        case .regular, .destructive, .proLocked:
+            RoundedRectangle(cornerRadius: AppTheme.Metrics.controlCornerRadius, style: .continuous)
+                .fill(AppTheme.Colors.elevatedSurface)
+        }
+    }
+
+    @ViewBuilder
+    private var overlayView: some View {
+        let shape = RoundedRectangle(cornerRadius: AppTheme.Metrics.controlCornerRadius, style: .continuous)
+
+        switch style {
+        case .prominent:
+            shape
+                .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+        case .regular:
+            shape
+                .strokeBorder(AppTheme.Colors.separator.opacity(0.25), lineWidth: 1)
+        case .destructive:
+            shape
+                .strokeBorder(AppTheme.Colors.destructive.opacity(0.35), lineWidth: 1.5)
+        case .proLocked:
+            shape
+                .strokeBorder(proGradient, lineWidth: 2)
+                .overlay(alignment: .topTrailing) {
+                    Image(systemName: "lock.fill")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.white)
+                        .padding(6)
+                        .background(Circle().fill(proGradient))
+                        .offset(x: 8, y: -8)
+                        .accessibilityHidden(true)
+                }
+        }
+    }
+
+    private var proGradient: LinearGradient {
+        LinearGradient(
+            colors: [Color(uiColor: .systemYellow), Color(uiColor: .systemOrange)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
 }
 

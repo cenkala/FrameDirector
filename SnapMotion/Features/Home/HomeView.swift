@@ -136,6 +136,9 @@ struct HomeView: View {
                             onDelete: {
                                 viewModel.deleteProject(project)
                             },
+                            onRequestDeleteUpgrade: {
+                                paywallPresenter.presentPaywall()
+                            },
                             canDelete: viewModel.canDeleteProject(project)
                         )
                     }

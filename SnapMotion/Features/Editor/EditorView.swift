@@ -89,23 +89,10 @@ struct EditorView: View {
                 } label: {
                     Image(systemName: "square.and.arrow.up.fill")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(FeatureGateService.shared.isPro ? AnyShapeStyle(Color.white) : AnyShapeStyle(proGradient))
                         .frame(width: 36, height: 36)
                 }
                 .disabled(!viewModel.canExport || isExporting)
-                .overlay(alignment: .topTrailing) {
-                    if !FeatureGateService.shared.isPro {
-                        ZStack {
-                            Circle()
-                                .fill(Color.yellow)
-                                .frame(width: 16, height: 16)
-                            Text("PRO")
-                                .font(.system(size: 8, weight: .bold))
-                                .foregroundStyle(.black)
-                        }
-                        .offset(x: 6, y: -6)
-                    }
-                }
                 .confirmationDialog(
                     LocalizedStringKey("editor.export"),
                     isPresented: $showExportOptions,
@@ -531,6 +518,14 @@ struct EditorView: View {
         }
         
         showExportOptions = true
+    }
+
+    private var proGradient: LinearGradient {
+        LinearGradient(
+            colors: [Color(uiColor: .systemYellow), Color(uiColor: .systemOrange)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
     
     private func startExport(action: ExportAction) {
