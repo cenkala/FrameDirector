@@ -12,12 +12,14 @@ import SwiftData
 struct ImportView: View {
     @Environment(\.dismiss) private var dismiss
     let project: MovieProject
+    let targetStackId: String?
     
     @Bindable var viewModel: ImportViewModel
     
-    init(project: MovieProject, modelContext: ModelContext) {
+    init(project: MovieProject, modelContext: ModelContext, targetStackId: String? = nil) {
         self.project = project
-        self.viewModel = ImportViewModel(project: project, modelContext: modelContext)
+        self.targetStackId = targetStackId
+        self.viewModel = ImportViewModel(project: project, modelContext: modelContext, targetStackId: targetStackId)
     }
     
     var body: some View {

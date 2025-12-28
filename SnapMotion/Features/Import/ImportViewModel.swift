@@ -15,15 +15,17 @@ final class ImportViewModel {
     private let project: MovieProject
     private let modelContext: ModelContext
     private let frameExtractor = FrameExtractor()
+    private let targetStackId: String?
     
     var selectedItems: [PhotosPickerItem] = []
     var isProcessing = false
     var processingProgress: Double = 0.0
     var errorMessage: String?
     
-    init(project: MovieProject, modelContext: ModelContext) {
+    init(project: MovieProject, modelContext: ModelContext, targetStackId: String? = nil) {
         self.project = project
         self.modelContext = modelContext
+        self.targetStackId = targetStackId
     }
     
     func processSelectedItems() async {
@@ -74,15 +76,18 @@ final class ImportViewModel {
             _ = try await MovieStorage.shared.saveFrame(image, fileName: fileName, projectId: project.id)
             
             await MainActor.run {
+                let insertionOrderIndex = calculateInsertionOrderIndex(for: targetStackId)
                 let frameAsset = FrameAsset(
                     localFileName: fileName,
-                    orderIndex: project.frames.count,
-                    source: source
+                    orderIndex: insertionOrderIndex,
+                    source: source,
+                    stackId: targetStackId
                 )
                 
                 frameAsset.project = project
                 modelContext.insert(frameAsset)
                 project.frames.append(frameAsset)
+                normalizeFrameOrder()
                 project.updatedAt = Date()
                 try? modelContext.save()
             }
@@ -90,6 +95,22 @@ final class ImportViewModel {
             await MainActor.run {
                 errorMessage = error.localizedDescription
             }
+        }
+    }
+
+    private func calculateInsertionOrderIndex(for stackId: String?) -> Int {
+        guard let stackId else { return project.frames.count }
+        let existing = project.frames.filter { $0.stackId == stackId }
+        if let maxOrder = existing.map(\.orderIndex).max() {
+            return maxOrder + 1
+        }
+        return project.frames.count
+    }
+
+    private func normalizeFrameOrder() {
+        let sorted = project.frames.sorted { $0.orderIndex < $1.orderIndex }
+        for (index, frame) in sorted.enumerated() {
+            frame.orderIndex = index
         }
     }
 }

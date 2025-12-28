@@ -13,6 +13,7 @@ struct CaptureView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     let project: MovieProject
+    let targetStackId: String?
     
     @State private var viewModel: CaptureViewModel?
     
@@ -54,7 +55,7 @@ struct CaptureView: View {
         .tint(.accentColor)
         .onAppear {
             if viewModel == nil {
-                viewModel = CaptureViewModel(project: project, modelContext: modelContext)
+                viewModel = CaptureViewModel(project: project, modelContext: modelContext, targetStackId: targetStackId)
             }
         }
         .onDisappear {

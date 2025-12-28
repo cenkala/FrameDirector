@@ -23,6 +23,9 @@ struct EditorView: View {
     @State private var exportError: String?
     @State private var showExportSuccess = false
     @State private var currentFrameImage: UIImage?
+    @State private var showAddDialog = false
+    @State private var pendingAddStackId: String? = nil
+    @State private var endPlusStackId: String? = nil
     
     init(project: MovieProject, modelContext: ModelContext) {
         self.project = project
@@ -30,15 +33,15 @@ struct EditorView: View {
     }
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: AppTheme.Metrics.contentSpacing) {
-                previewSection
-                controlsSection
-                framesSection
-            }
-            .padding(AppTheme.Metrics.screenPadding)
-            .padding(.bottom, 12)
+        VStack(spacing: 12) {
+            previewSection
+            controlsSection
+            Spacer()
+            timelineSection
         }
+        .padding(AppTheme.Metrics.screenPadding)
+        .padding(.bottom, 12)
+        .frame(maxHeight: .infinity)
         .navigationTitle(project.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -64,12 +67,14 @@ struct EditorView: View {
 
                 Menu {
                     Button {
+                        pendingAddStackId = nil
                         showCaptureView = true
                     } label: {
                         Label(LocalizedStringKey("create.camera"), systemImage: "camera")
                     }
 
                     Button {
+                        pendingAddStackId = nil
                         showImportView = true
                     } label: {
                         Label(LocalizedStringKey("create.photoLibrary"), systemImage: "photo")
@@ -88,10 +93,10 @@ struct EditorView: View {
         .tint(.accentColor)
         .appScreenBackground()
         .sheet(isPresented: $showCaptureView) {
-            CaptureView(project: project)
+            CaptureView(project: project, targetStackId: pendingAddStackId)
         }
         .sheet(isPresented: $showImportView) {
-            ImportView(project: project, modelContext: modelContext)
+            ImportView(project: project, modelContext: modelContext, targetStackId: pendingAddStackId)
         }
         .sheet(isPresented: $paywallPresenter.shouldShowPaywall) {
             PaywallView()
@@ -121,6 +126,31 @@ struct EditorView: View {
             Button("OK") { }
         } message: {
             Text("Your video has been saved to Photos.")
+        }
+        .confirmationDialog("Add", isPresented: $showAddDialog, titleVisibility: .hidden) {
+            Button {
+                showCaptureView = true
+            } label: {
+                Text(LocalizedStringKey("create.camera"))
+            }
+
+            Button {
+                showImportView = true
+            } label: {
+                Text(LocalizedStringKey("create.photoLibrary"))
+            }
+
+            Button {
+                viewModel.showTitleCredits = true
+            } label: {
+                Text(LocalizedStringKey("editor.titleCredits"))
+            }
+
+            Button(role: .cancel) {
+                pendingAddStackId = nil
+            } label: {
+                Text(LocalizedStringKey("general.cancel"))
+            }
         }
     }
     
@@ -153,53 +183,103 @@ struct EditorView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 320)
+        .frame(height: 240)
     }
     
     private var controlsSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(LocalizedStringKey("editor.fps"))
-                    .font(.headline.weight(.semibold))
-                Spacer()
-                AppChip(systemImage: "clock", text: String(format: "%.1fs", project.duration))
-            }
+        HStack(alignment: .center, spacing: 12) {
+            // FPS Controls
+            HStack(spacing: 8) {
+                Text("FPS:")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
 
-            Stepper(value: Binding(
-                get: { project.fps },
-                set: { viewModel.updateFPS($0) }
-            ), in: 1...60) {
-                HStack {
+                HStack(spacing: 4) {
+                    Button {
+                        if project.fps > 1 {
+                            viewModel.updateFPS(project.fps - 1)
+                        }
+                    } label: {
+                        Image(systemName: "minus")
+                            .font(.caption)
+                            .foregroundColor(.accentColor)
+                            .frame(width: 24, height: 24)
+                            .background(Color.gray.opacity(0.1))
+                            .clipShape(Circle())
+                    }
+
                     Text("\(project.fps)")
-                        .font(.title3.weight(.bold))
-                    Text("fps")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(.subheadline.weight(.bold))
+                        .frame(minWidth: 30)
+                        .foregroundColor(.accentColor)
+
+                    Button {
+                        if project.fps < 60 {
+                            viewModel.updateFPS(project.fps + 1)
+                        }
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.caption)
+                            .foregroundColor(.accentColor)
+                            .frame(width: 24, height: 24)
+                            .background(Color.gray.opacity(0.1))
+                            .clipShape(Circle())
+                    }
                 }
             }
 
-            if viewModel.exceedsFreeDuration {
-                Text(LocalizedStringKey("editor.freeLimit"))
+            Spacer()
+
+            // Duration info
+            HStack(spacing: 4) {
+                Image(systemName: "clock")
                     .font(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundColor(.secondary)
+                Text(String(format: "%.1fs", project.duration))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            // Warning if needed
+            if viewModel.exceedsFreeDuration {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundColor(.red)
             }
         }
-        .appCard()
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: AppTheme.Metrics.cardCornerRadius)
+                .fill(AppTheme.Colors.elevatedSurface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppTheme.Metrics.cardCornerRadius)
+                        .strokeBorder(AppTheme.Colors.separator.opacity(0.25), lineWidth: 1)
+                )
+        )
+        .padding(.horizontal, AppTheme.Metrics.screenPadding)
     }
 
-    private var framesSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+    private var timelineSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(LocalizedStringKey("editor.frames"))
-                    .font(.headline.weight(.semibold))
+                    .font(.subheadline.weight(.semibold))
                 Spacer()
-                AppChip(systemImage: "photo.stack", text: "\(viewModel.sortedFrames.count)")
+                HStack(spacing: 4) {
+                    Image(systemName: "photo.stack")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text("\(viewModel.totalFrameCount)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             }
 
-            FrameStripView(
-                frames: viewModel.sortedFrames,
+            TimelineView(
+                timelineItems: viewModel.timelineItems,
                 projectId: project.id,
-                currentIndex: $viewModel.currentFrameIndex,
+                currentFrameIndex: $viewModel.currentFrameIndex,
                 onDelete: { index in
                     viewModel.deleteFrame(at: index)
                 },
@@ -210,15 +290,43 @@ struct EditorView: View {
                         paywallPresenter.presentPaywall()
                     }
                 },
-                onMove: { source, destination in
+                onMoveFrame: { source, destination in
                     viewModel.moveFrame(from: source, to: destination)
+                },
+                onMoveTimelineItem: { sourceItemIndex, destinationItemIndex in
+                    viewModel.moveTimelineItem(from: sourceItemIndex, to: destinationItemIndex)
+                },
+                onSetStackId: { frameId, stackId in
+                    // No-op since we don't use stackId anymore
+                },
+                onMoveFrameById: { frameId, destinationIndex in
+                    viewModel.moveFrameById(frameId, toGlobalIndex: destinationIndex)
+                },
+                onTapAddToStack: { stackId in
+                    // No-op since we don't use stacks anymore
+                },
+                onTapAddToEnd: {
+                    showAddDialog = true
+                },
+                onSelectFrame: { index in
+                    viewModel.selectFrame(at: index)
+                },
+                getGlobalIndex: { frame in
+                    viewModel.getGlobalFrameIndex(for: frame)
                 }
             )
-            .frame(height: 120)
-            .padding(.horizontal, -AppTheme.Metrics.screenPadding)
-            .padding(.bottom, -AppTheme.Metrics.screenPadding)
+            .frame(maxHeight: 120)
+            .listRowInsets(EdgeInsets(top: .zero, leading: 10, bottom: .zero, trailing: .zero))
         }
-        .appCard()
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: AppTheme.Metrics.cardCornerRadius)
+                .fill(AppTheme.Colors.elevatedSurface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppTheme.Metrics.cardCornerRadius)
+                        .strokeBorder(AppTheme.Colors.separator.opacity(0.25), lineWidth: 1)
+                )
+        )
     }
     
     private func handleExport() {
