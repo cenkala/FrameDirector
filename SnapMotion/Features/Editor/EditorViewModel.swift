@@ -191,7 +191,7 @@ final class EditorViewModel {
         let frames = sortedFrames
         guard index < frames.count else { return }
         guard canAddMoreFrames() else { return }
-        
+
         let originalFrame = frames[index]
         let newFrame = FrameAsset(
             localFileName: "\(UUID().uuidString).jpg",
@@ -199,11 +199,19 @@ final class EditorViewModel {
             source: originalFrame.sourceEnum,
             stackId: nil
         )
+
+        // Insert the new frame at the correct position in the array
         newFrame.project = project
         project.frames.append(newFrame)
-        reorderFrames()
+
+        // Shift orderIndex of frames that come after the new frame
+        for frame in frames where frame.orderIndex >= newFrame.orderIndex {
+            frame.orderIndex += 1
+        }
+
+        project.updatedAt = Date()
         try? modelContext.save()
-        
+
         Task {
             try? await MovieStorage.shared.duplicateFrameFile(
                 from: originalFrame.localFileName,

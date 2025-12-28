@@ -395,33 +395,27 @@ struct SingleFrameView: View {
     let onSelect: () -> Void
 
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 4)
-                .fill(isSelected ? Color.accentColor.opacity(0.3) : Color.gray.opacity(0.1))
-                .frame(width: TimelineUI.frameSize, height: TimelineUI.frameSize)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 4)
-                        .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
-                )
-
-            TimelineThumbnailView(frame: frame, projectId: projectId, isSelected: isSelected)
-                .frame(width: TimelineUI.frameInnerSize, height: TimelineUI.frameInnerSize)
-                .clipShape(RoundedRectangle(cornerRadius: 3))
-        }
-        .overlay(alignment: .topLeading) {
-            if frame.sourceEnum == .videoExtract {
-                Image(systemName: "video.fill")
-                    .font(.system(size: 8))
-                    .foregroundColor(.white)
-                    .padding(2)
-                    .background(Color.black.opacity(0.7))
-                    .clipShape(Circle())
-                    .offset(x: -4, y: -4)
+        TimelineThumbnailView(frame: frame, projectId: projectId, isSelected: isSelected)
+            .frame(width: TimelineUI.frameSize, height: TimelineUI.frameSize)
+            .background(
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.gray.opacity(0.1))
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .overlay(alignment: .topLeading) {
+                if frame.sourceEnum == .videoExtract {
+                    Image(systemName: "video.fill")
+                        .font(.system(size: 8))
+                        .foregroundColor(.white)
+                        .padding(2)
+                        .background(Color.black.opacity(0.7))
+                        .clipShape(Circle())
+                        .offset(x: -4, y: -4)
+                }
             }
-        }
-        .onTapGesture {
-            onSelect()
-        }
+            .onTapGesture {
+                onSelect()
+            }
     }
 }
 
@@ -450,14 +444,7 @@ struct TimelineThumbnailView: View {
                     )
             }
 
-            // Selection indicator
-            if isSelected {
-                RoundedRectangle(cornerRadius: 3)
-                    .stroke(Color.white, lineWidth: 2)
-                    .padding(1)
-                RoundedRectangle(cornerRadius: 3)
-                    .stroke(Color.accentColor, lineWidth: 1)
-            }
+            // Selection indicator removed
         }
         .task(id: frame.localFileName) {
             thumbnailImage = await MovieStorage.shared.loadFrame(fileName: frame.localFileName, projectId: projectId)

@@ -33,60 +33,77 @@ struct EditorView: View {
     }
     
     var body: some View {
-        VStack(spacing: 12) {
+        ZStack {
+            // Background gradient
+            LinearGradient(
+                colors: [
+                    AppTheme.Colors.background,
+                    AppTheme.Colors.background.opacity(0.95)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            VStack(spacing: 16) {
             previewSection
-            controlsSection
-            Spacer()
+                playControlsSection
+                Spacer(minLength: 0)
             timelineSection
         }
-        .padding(AppTheme.Metrics.screenPadding)
-        .padding(.bottom, 12)
+            .padding(.horizontal, AppTheme.Metrics.screenPadding)
+            .padding(.top, 8)
+            .padding(.bottom, 16)
         .frame(maxHeight: .infinity)
         .navigationTitle(project.title)
         .navigationBarTitleDisplayMode(.inline)
+        }
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarBackground(
+            LinearGradient(
+                colors: [
+                    AppTheme.Colors.elevatedSurface.opacity(0.8),
+                    AppTheme.Colors.elevatedSurface.opacity(0.6)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            ),
+            for: .navigationBar
+        )
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button {
-                    viewModel.togglePlayback()
-                } label: {
-                    Image(systemName: viewModel.isPlaying ? "pause.fill" : "play.fill")
-                }
-                .disabled(viewModel.sortedFrames.isEmpty)
-
-                Button {
                     handleExport()
                 } label: {
+                    ZStack {
+                        Circle()
+                            .fill(Color.blue.opacity(0.2))
+                            .frame(width: 36, height: 36)
+
                     if isExporting {
                         ProgressView()
+                                .tint(.blue)
                     } else {
-                        Image(systemName: "square.and.arrow.up")
+                            Image(systemName: "square.and.arrow.up.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(.blue)
+                        }
                     }
                 }
                 .disabled(!viewModel.canExport || isExporting)
-                .proFeatureBadge(isLocked: !FeatureGateService.shared.isPro)
-
-                Menu {
-                    Button {
-                        pendingAddStackId = nil
-                        showCaptureView = true
-                    } label: {
-                        Label(LocalizedStringKey("create.camera"), systemImage: "camera")
+                .overlay(alignment: .topTrailing) {
+                    if !FeatureGateService.shared.isPro {
+                        ZStack {
+                            Circle()
+                                .fill(Color.yellow)
+                                .frame(width: 16, height: 16)
+                            Text("PRO")
+                                .font(.system(size: 8, weight: .bold))
+                                .foregroundStyle(.black)
+                        }
+                        .offset(x: 6, y: -6)
                     }
-
-                    Button {
-                        pendingAddStackId = nil
-                        showImportView = true
-                    } label: {
-                        Label(LocalizedStringKey("create.photoLibrary"), systemImage: "photo")
-                    }
-
-                    Button {
-                        viewModel.showTitleCredits = true
-                    } label: {
-                        Label(LocalizedStringKey("editor.titleCredits"), systemImage: "text.alignleft")
-                    }
-                } label: {
-                    Image(systemName: "plus")
                 }
             }
         }
@@ -156,126 +173,258 @@ struct EditorView: View {
     
     private var previewSection: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: AppTheme.Metrics.cardCornerRadius, style: .continuous)
+            // Main container with enhanced styling
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(AppTheme.Colors.elevatedSurface)
-                .overlay {
-                    RoundedRectangle(cornerRadius: AppTheme.Metrics.cardCornerRadius, style: .continuous)
-                        .strokeBorder(AppTheme.Colors.separator.opacity(0.25), lineWidth: 1)
-                }
+                .shadow(
+                    color: Color.black.opacity(0.1),
+                    radius: 12,
+                    x: 0,
+                    y: 4
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [
+                                    AppTheme.Colors.separator.opacity(0.3),
+                                    AppTheme.Colors.separator.opacity(0.1)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ),
+                            lineWidth: 1
+                        )
+                )
 
             if viewModel.sortedFrames.isEmpty {
-                ContentUnavailableView {
-                    Label(LocalizedStringKey("editor.noFrames"), systemImage: "film.stack")
+                VStack(spacing: 16) {
+                    Image(systemName: "film.stack")
+                        .font(.system(size: 48))
+                        .foregroundStyle(.secondary.opacity(0.6))
+
+                    Text(LocalizedStringKey("editor.noFrames"))
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+
+                    Text("Add frames to start creating your video")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary.opacity(0.7))
+                        .multilineTextAlignment(.center)
                 }
+                .padding(.horizontal, 24)
             } else if let currentFrameImage {
+                ZStack {
                 Image(uiImage: currentFrameImage)
                     .resizable()
                     .scaledToFit()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .clipped()
-                    .padding(10)
-                    .overlay(alignment: .topLeading) {
-                        AppChip(systemImage: "rectangle.stack", text: "\(viewModel.currentFrameIndex + 1)/\(viewModel.sortedFrames.count)")
-                            .padding(12)
+                        .cornerRadius(16)
+                        .padding(2)
+
+                    // Enhanced frame counter
+                    VStack {
+                        HStack {
+                            Spacer()
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(Color.black.opacity(0.7))
+                                    .frame(width: 80, height: 32)
+
+                                HStack(spacing: 4) {
+                                    Image(systemName: "rectangle.stack.fill")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(.white.opacity(0.9))
+                                    Text("\(viewModel.currentFrameIndex + 1)/\(viewModel.sortedFrames.count)")
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                }
+                            }
+                            .padding(16)
+                        }
+                        Spacer()
                     }
+                }
+                .padding(8)
             } else {
+                VStack(spacing: 16) {
                 ProgressView()
+                        .scaleEffect(1.2)
+                    Text("Loading frame...")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 240)
+        .frame(height: 280)
+        .padding(.horizontal, 4)
     }
-    
-    private var controlsSection: some View {
-        HStack(alignment: .center, spacing: 12) {
-            // FPS Controls
-            HStack(spacing: 8) {
-                Text("FPS:")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.secondary)
 
-                HStack(spacing: 4) {
-                    Button {
-                        if project.fps > 1 {
-                            viewModel.updateFPS(project.fps - 1)
+    private var playControlsSection: some View {
+        HStack(spacing: 20) {
+            // Left side - FPS Controls
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Menu {
+                        ForEach([1, 5, 10, 15, 20, 24, 25, 30, 50, 60], id: \.self) { fps in
+                            Button {
+                                viewModel.updateFPS(fps)
+                            } label: {
+                                HStack {
+                                    Text("\(fps)")
+                                        .font(.system(size: 16, weight: .semibold))
+                                    Text("FPS")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(.secondary)
+                                    if fps == project.fps {
+                                        Spacer()
+                                        Image(systemName: "checkmark")
+                                            .font(.system(size: 12, weight: .semibold))
+                                    }
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            }
                         }
                     } label: {
-                        Image(systemName: "minus")
-                            .font(.caption)
-                            .foregroundColor(.accentColor)
-                            .frame(width: 24, height: 24)
-                            .background(Color.gray.opacity(0.1))
-                            .clipShape(Circle())
-                    }
+                        HStack(spacing: 6) {
+                            Text("\(project.fps)")
+                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                                .foregroundStyle(Color.accentColor)
+                                .monospacedDigit()
 
-                    Text("\(project.fps)")
-                        .font(.subheadline.weight(.bold))
-                        .frame(minWidth: 30)
-                        .foregroundColor(.accentColor)
-
-                    Button {
-                        if project.fps < 60 {
-                            viewModel.updateFPS(project.fps + 1)
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundStyle(.secondary)
                         }
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.caption)
-                            .foregroundColor(.accentColor)
-                            .frame(width: 24, height: 24)
-                            .background(Color.gray.opacity(0.1))
-                            .clipShape(Circle())
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(Color.accentColor.opacity(0.1))
+                        )
                     }
+                    .frame(height: 32) // Fixed height for alignment
+                }
+
+                // Duration
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("DURATION")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(.secondary.opacity(0.8))
+                        .tracking(1)
+
+                    HStack(spacing: 4) {
+                        Image(systemName: "clock")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                        Text(String(format: "%.1fs", project.duration))
+                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.primary)
+                            .monospacedDigit()
+                    }
+                    .frame(height: 20) // Fixed height for alignment
+                }
+
+                // Warning if needed
+                if viewModel.exceedsFreeDuration {
+                    VStack {
+                        Spacer()
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.red)
+                        Spacer()
+                    }
+                    .frame(height: 54) // Match total height of other elements
                 }
             }
 
             Spacer()
 
-            // Duration info
-            HStack(spacing: 4) {
-                Image(systemName: "clock")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Text(String(format: "%.1fs", project.duration))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
+            // Center - Play Button
+            Button {
+                viewModel.togglePlayback()
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(viewModel.isPlaying ? Color.red.opacity(0.2) : Color.accentColor.opacity(0.2))
+                        .frame(width: 64, height: 64)
+                        .shadow(
+                            color: Color.black.opacity(0.1),
+                            radius: 8,
+                            x: 0,
+                            y: 2
+                        )
 
-            // Warning if needed
-            if viewModel.exceedsFreeDuration {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.caption)
-                    .foregroundColor(.red)
+                    Image(systemName: viewModel.isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundStyle(viewModel.isPlaying ? .red : Color.accentColor)
+                }
             }
+            .disabled(viewModel.sortedFrames.isEmpty)
+
+            // Right side - Edit Menu
+            Menu {
+                Button {
+                    viewModel.deleteFrame(at: viewModel.currentFrameIndex)
+                } label: {
+                    Label("Delete Frame", systemImage: "trash")
+                        .foregroundStyle(.red)
+                }
+                .disabled(viewModel.sortedFrames.isEmpty)
+
+                Button {
+                    if viewModel.canAddMoreFrames() {
+                        viewModel.duplicateFrame(at: viewModel.currentFrameIndex)
+                    } else {
+                        paywallPresenter.presentPaywall()
+                    }
+                } label: {
+                    Label("Duplicate Frame", systemImage: "doc.on.doc")
+                }
+                .disabled(viewModel.sortedFrames.isEmpty)
+
+                Divider()
+
+                Button {
+                    viewModel.showTitleCredits = true
+                } label: {
+                    Label("Add Title/Credits", systemImage: "text.alignleft")
+                }
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .disabled(viewModel.sortedFrames.isEmpty)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: AppTheme.Metrics.cardCornerRadius)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(AppTheme.Colors.elevatedSurface)
+                .shadow(
+                    color: Color.black.opacity(0.05),
+                    radius: 8,
+                    x: 0,
+                    y: 2
+                )
                 .overlay(
-                    RoundedRectangle(cornerRadius: AppTheme.Metrics.cardCornerRadius)
-                        .strokeBorder(AppTheme.Colors.separator.opacity(0.25), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(AppTheme.Colors.separator.opacity(0.15), lineWidth: 1)
                 )
         )
-        .padding(.horizontal, AppTheme.Metrics.screenPadding)
+        .padding(.horizontal, 4)
     }
 
     private var timelineSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(LocalizedStringKey("editor.frames"))
-                    .font(.subheadline.weight(.semibold))
-                Spacer()
-                HStack(spacing: 4) {
-                    Image(systemName: "photo.stack")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Text("\(viewModel.totalFrameCount)")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-
             TimelineView(
                 timelineItems: viewModel.timelineItems,
                 projectId: project.id,
@@ -315,18 +464,8 @@ struct EditorView: View {
                     viewModel.getGlobalFrameIndex(for: frame)
                 }
             )
-            .frame(maxHeight: 120)
-            .listRowInsets(EdgeInsets(top: .zero, leading: 10, bottom: .zero, trailing: .zero))
-        }
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: AppTheme.Metrics.cardCornerRadius)
-                .fill(AppTheme.Colors.elevatedSurface)
-                .overlay(
-                    RoundedRectangle(cornerRadius: AppTheme.Metrics.cardCornerRadius)
-                        .strokeBorder(AppTheme.Colors.separator.opacity(0.25), lineWidth: 1)
-                )
-        )
+        .frame(height: 100)
+        .padding(.horizontal, 4)
     }
     
     private func handleExport() {
