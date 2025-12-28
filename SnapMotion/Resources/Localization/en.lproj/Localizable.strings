@@ -57,11 +57,15 @@
 /* Editor */
 "editor.title" = "Editor";
 "editor.fps" = "FPS";
+"editor.duration" = "DURATION";
 "editor.play" = "Play";
 "editor.pause" = "Pause";
 "editor.addFrame" = "Add Frame";
+"editor.addTitleCredits" = "Add Title/Credits";
 "editor.frames" = "Frames";
 "editor.noFrames" = "No frames yet";
+"editor.emptyState.addFramesHelp" = "Add frames to start creating your video";
+"editor.loadingFrame" = "Loading frame...";
 "editor.exporting" = "Exporting...";
 "editor.deleteFrame" = "Delete Frame";
 "editor.duplicateFrame" = "Duplicate Frame";
@@ -72,20 +76,28 @@
 "editor.titleCredits" = "Title & Credits";
 "editor.freeLimit" = "Free users: max 5 seconds";
 "editor.proFeature" = "Pro Feature";
+"editor.timeline.title" = "TITLE";
+"editor.timeline.credits" = "CREDITS";
 
 /* Title & Credits */
 "titleCredits.title" = "Title & Credits";
 "titleCredits.titleCard" = "Title Card";
+"titleCredits.titleCard.optionalHelp" = "Optional: Leave empty to skip title card";
 "titleCredits.titlePlaceholder" = "Enter title...";
 "titleCredits.credits" = "Credits";
+"titleCredits.credits.optionalHelp" = "Optional: Leave empty to skip credits";
 "titleCredits.creditsMode" = "Credits Mode";
 "titleCredits.plainCredits" = "Plain Text";
 "titleCredits.structuredCredits" = "Structured";
+"titleCredits.structured.proInfo" = "Structured credits are a Pro feature";
 "titleCredits.plainPlaceholder" = "Enter credits...";
 "titleCredits.director" = "Director";
 "titleCredits.animator" = "Animator";
 "titleCredits.music" = "Music";
 "titleCredits.thanks" = "Thanks";
+"titleCredits.addExtraField" = "Add Field";
+"titleCredits.extraFieldLabel" = "Role";
+"titleCredits.extraFieldValue" = "Name";
 
 /* Player */
 "player.title" = "Player";
@@ -122,6 +134,19 @@
 "error.importFailed" = "Import failed";
 "error.projectLimit" = "Free users can only create 1 project";
 "error.cannotDelete" = "Free users cannot delete projects";
+"error.photoLibraryAccess.saveVideo" = "Photos access is required to save the video. Please enable it in Settings.";
+"error.camera.noAvailableCamera" = "No camera available";
+"error.camera.cannotAddInput" = "Cannot add camera input";
+"error.camera.cannotAddOutput" = "Cannot add capture output";
+"error.camera.captureFailed" = "Capture failed";
+"error.storage.compressionFailed" = "Failed to compress image";
+"error.storage.saveFailed" = "Failed to save file";
+"error.render.noFrames" = "No frames to render";
+"error.render.writingFailed" = "Video writing failed";
+"error.render.pixelBufferFailed" = "Failed to create pixel buffer";
+"error.render.appendFailed" = "Failed to append frame";
+"error.export.noFrames" = "No frames to export";
+"error.export.renderFailed" = "Failed to render video";
 
 /* Permissions */
 "permission.camera.title" = "Camera Access Required";

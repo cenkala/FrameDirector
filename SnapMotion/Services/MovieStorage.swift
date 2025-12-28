@@ -105,9 +105,9 @@ actor MovieStorage {
         var errorDescription: String? {
             switch self {
             case .compressionFailed:
-                return "Failed to compress image"
+                return String(localized: "error.storage.compressionFailed")
             case .saveFailed:
-                return "Failed to save file"
+                return String(localized: "error.storage.saveFailed")
             }
         }
     }

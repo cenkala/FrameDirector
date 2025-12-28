@@ -233,13 +233,13 @@ actor VideoRenderer {
         var errorDescription: String? {
             switch self {
             case .noFrames:
-                return "No frames to render"
+                return String(localized: "error.render.noFrames")
             case .writingFailed:
-                return "Video writing failed"
+                return String(localized: "error.render.writingFailed")
             case .pixelBufferFailed:
-                return "Failed to create pixel buffer"
+                return String(localized: "error.render.pixelBufferFailed")
             case .appendFailed:
-                return "Failed to append frame"
+                return String(localized: "error.render.appendFailed")
             }
         }
     }

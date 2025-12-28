@@ -66,7 +66,7 @@ struct TitleCreditsView: View {
         } header: {
             Text(LocalizedStringKey("titleCredits.titleCard"))
         } footer: {
-            Text("Optional: Leave empty to skip title card")
+            Text(LocalizedStringKey("titleCredits.titleCard.optionalHelp"))
                 .font(.caption)
         }
     }
@@ -109,13 +109,13 @@ struct TitleCreditsView: View {
                 if viewModel.canUseStructured {
                     StructuredCreditsEditor(credits: $viewModel.structuredCredits)
                 } else {
-                    Text("Structured credits are a Pro feature")
+                    Text(LocalizedStringKey("titleCredits.structured.proInfo"))
                         .foregroundStyle(.secondary)
                         .italic()
                 }
             }
         } footer: {
-            Text("Optional: Leave empty to skip credits")
+            Text(LocalizedStringKey("titleCredits.credits.optionalHelp"))
                 .font(.caption)
         }
     }

@@ -181,7 +181,7 @@ struct EditorView: View {
                         .font(.headline)
                         .foregroundStyle(.secondary)
                     
-                    Text("Add frames to start creating your video")
+                    Text(LocalizedStringKey("editor.emptyState.addFramesHelp"))
                         .font(.subheadline)
                         .foregroundStyle(.secondary.opacity(0.7))
                         .multilineTextAlignment(.center)
@@ -225,7 +225,7 @@ struct EditorView: View {
                 VStack(spacing: 16) {
                     ProgressView()
                         .scaleEffect(1.2)
-                    Text("Loading frame...")
+                    Text(LocalizedStringKey("editor.loadingFrame"))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -250,7 +250,7 @@ struct EditorView: View {
                                 HStack {
                                     Text("\(fps)")
                                         .font(.system(size: 16, weight: .semibold))
-                                    Text("FPS")
+                                    Text(LocalizedStringKey("editor.fps"))
                                         .font(.system(size: 12))
                                         .foregroundStyle(.secondary)
                                     if fps == project.fps {
@@ -285,7 +285,7 @@ struct EditorView: View {
                 
                 // Duration
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("DURATION")
+                    Text(LocalizedStringKey("editor.duration"))
                         .font(.system(size: 9, weight: .bold, design: .rounded))
                         .foregroundStyle(.secondary.opacity(0.8))
                         .tracking(1)
@@ -344,7 +344,7 @@ struct EditorView: View {
                 Button {
                     viewModel.deleteFrame(at: viewModel.currentFrameIndex)
                 } label: {
-                    Label("Delete Frame", systemImage: "trash")
+                    Label(LocalizedStringKey("editor.deleteFrame"), systemImage: "trash")
                         .foregroundStyle(.red)
                 }
                 .disabled(viewModel.sortedFrames.isEmpty)
@@ -356,7 +356,7 @@ struct EditorView: View {
                         paywallPresenter.presentPaywall()
                     }
                 } label: {
-                    Label("Duplicate Frame", systemImage: "doc.on.doc")
+                    Label(LocalizedStringKey("editor.duplicateFrame"), systemImage: "doc.on.doc")
                 }
                 .disabled(viewModel.sortedFrames.isEmpty)
 
@@ -365,7 +365,7 @@ struct EditorView: View {
                 Button {
                     viewModel.showTitleCredits = true
                 } label: {
-                    Label("Add Title/Credits", systemImage: "text.alignleft")
+                    Label(LocalizedStringKey("editor.addTitleCredits"), systemImage: "text.alignleft")
                 }
             } label: {
                 ZStack {
@@ -407,7 +407,7 @@ struct EditorView: View {
         return HStack(spacing: 8) {
             if hasTitle {
                 TimelineAuxChip(
-                    title: "TITLE",
+                    title: LocalizedStringKey("editor.timeline.title"),
                     systemImage: "textformat",
                     action: { viewModel.showTitleCardPreview() }
                 )
@@ -462,7 +462,7 @@ struct EditorView: View {
             
             if hasCredits {
                 TimelineAuxChip(
-                    title: "CREDITS",
+                    title: LocalizedStringKey("editor.timeline.credits"),
                     systemImage: "list.bullet",
                     action: { viewModel.showCreditsPreview() }
                 )
@@ -588,7 +588,7 @@ struct EditorView: View {
         var errorDescription: String? {
             switch self {
             case .photoLibraryAccessDenied:
-                return "Photos access is required to save the video. Please enable it in Settings."
+                return String(localized: "error.photoLibraryAccess.saveVideo")
             }
         }
     }
@@ -684,7 +684,7 @@ private struct PreviewTitleCreditsOverlay: View {
 }
 
 private struct TimelineAuxChip: View {
-    let title: String
+    let title: LocalizedStringKey
     let systemImage: String
     let action: () -> Void
     

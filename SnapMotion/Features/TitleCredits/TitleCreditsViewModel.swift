@@ -8,11 +8,55 @@
 import Foundation
 import SwiftData
 
-struct StructuredCredits: Codable, Sendable {
+nonisolated struct ExtraCreditField: Codable, Identifiable, Sendable, Equatable {
+    var id: UUID
+    var label: String
+    var value: String
+    
+    init(id: UUID = UUID(), label: String = "", value: String = "") {
+        self.id = id
+        self.label = label
+        self.value = value
+    }
+}
+
+nonisolated struct StructuredCredits: Codable, Sendable {
     var director: String = ""
     var animator: String = ""
     var music: String = ""
     var thanks: String = ""
+    var extras: [ExtraCreditField] = []
+    
+    init(
+        director: String = "",
+        animator: String = "",
+        music: String = "",
+        thanks: String = "",
+        extras: [ExtraCreditField] = []
+    ) {
+        self.director = director
+        self.animator = animator
+        self.music = music
+        self.thanks = thanks
+        self.extras = extras
+    }
+    
+    private enum CodingKeys: String, CodingKey {
+        case director
+        case animator
+        case music
+        case thanks
+        case extras
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.director = try container.decodeIfPresent(String.self, forKey: .director) ?? ""
+        self.animator = try container.decodeIfPresent(String.self, forKey: .animator) ?? ""
+        self.music = try container.decodeIfPresent(String.self, forKey: .music) ?? ""
+        self.thanks = try container.decodeIfPresent(String.self, forKey: .thanks) ?? ""
+        self.extras = try container.decodeIfPresent([ExtraCreditField].self, forKey: .extras) ?? []
+    }
 }
 
 @Observable

@@ -11,7 +11,7 @@ import SwiftData
 @main
 struct FrameDirectorApp: App {
     @State private var languageManager = LanguageManager.shared
-    @State private var entitlementService = EntitlementService.shared
+    @State private var splashViewModel = SplashViewModel(entitlementService: EntitlementService.shared)
     
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -33,8 +33,15 @@ struct FrameDirectorApp: App {
 
     var body: some Scene {
         WindowGroup {
-            HomeView()
-                .environment(\.locale, languageManager.locale)
+            Group {
+                switch splashViewModel.phase {
+                case .loading:
+                    SplashView(viewModel: splashViewModel)
+                case .ready:
+                    HomeView()
+                }
+            }
+            .environment(\.locale, languageManager.locale)
         }
         .modelContainer(sharedModelContainer)
     }

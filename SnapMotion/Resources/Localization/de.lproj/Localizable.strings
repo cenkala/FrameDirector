@@ -57,11 +57,15 @@
 /* Editor */
 "editor.title" = "Editor";
 "editor.fps" = "FPS";
+"editor.duration" = "DAUER";
 "editor.play" = "Abspielen";
 "editor.pause" = "Pause";
 "editor.addFrame" = "Frame hinzufügen";
+"editor.addTitleCredits" = "Titel/Abspann hinzufügen";
 "editor.frames" = "Frames";
 "editor.noFrames" = "Noch keine Frames";
+"editor.emptyState.addFramesHelp" = "Füge Frames hinzu, um mit deinem Video zu beginnen";
+"editor.loadingFrame" = "Frame wird geladen...";
 "editor.exporting" = "Wird exportiert...";
 "editor.deleteFrame" = "Frame löschen";
 "editor.duplicateFrame" = "Frame duplizieren";
@@ -72,20 +76,28 @@
 "editor.titleCredits" = "Titel & Abspann";
 "editor.freeLimit" = "Kostenlose Nutzer: max 5 Sekunden";
 "editor.proFeature" = "Pro-Funktion";
+"editor.timeline.title" = "TITEL";
+"editor.timeline.credits" = "ABSPANN";
 
 /* Title & Credits */
 "titleCredits.title" = "Titel & Abspann";
 "titleCredits.titleCard" = "Titelkarte";
+"titleCredits.titleCard.optionalHelp" = "Optional: Leer lassen, um die Titelkarte zu überspringen";
 "titleCredits.titlePlaceholder" = "Titel eingeben...";
 "titleCredits.credits" = "Abspann";
+"titleCredits.credits.optionalHelp" = "Optional: Leer lassen, um den Abspann zu überspringen";
 "titleCredits.creditsMode" = "Abspann-Modus";
 "titleCredits.plainCredits" = "Einfacher Text";
 "titleCredits.structuredCredits" = "Strukturiert";
+"titleCredits.structured.proInfo" = "Strukturierter Abspann ist eine Pro-Funktion";
 "titleCredits.plainPlaceholder" = "Abspann eingeben...";
 "titleCredits.director" = "Regie";
 "titleCredits.animator" = "Animator";
 "titleCredits.music" = "Musik";
 "titleCredits.thanks" = "Danksagungen";
+"titleCredits.addExtraField" = "Feld hinzufügen";
+"titleCredits.extraFieldLabel" = "Rolle";
+"titleCredits.extraFieldValue" = "Name";
 
 /* Player */
 "player.title" = "Player";
@@ -122,6 +134,19 @@
 "error.importFailed" = "Import fehlgeschlagen";
 "error.projectLimit" = "Kostenlose Nutzer können nur 1 Projekt erstellen";
 "error.cannotDelete" = "Kostenlose Nutzer können keine Projekte löschen";
+"error.photoLibraryAccess.saveVideo" = "Zugriff auf Fotos ist erforderlich, um das Video zu speichern. Bitte aktiviere ihn in den Einstellungen.";
+"error.camera.noAvailableCamera" = "Keine Kamera verfügbar";
+"error.camera.cannotAddInput" = "Kameraeingang kann nicht hinzugefügt werden";
+"error.camera.cannotAddOutput" = "Aufnahmeausgabe kann nicht hinzugefügt werden";
+"error.camera.captureFailed" = "Aufnahme fehlgeschlagen";
+"error.storage.compressionFailed" = "Bild konnte nicht komprimiert werden";
+"error.storage.saveFailed" = "Datei konnte nicht gespeichert werden";
+"error.render.noFrames" = "Keine Frames zum Rendern";
+"error.render.writingFailed" = "Videodatei konnte nicht geschrieben werden";
+"error.render.pixelBufferFailed" = "Pixelpuffer konnte nicht erstellt werden";
+"error.render.appendFailed" = "Frame konnte nicht hinzugefügt werden";
+"error.export.noFrames" = "Keine Frames zum Exportieren";
+"error.export.renderFailed" = "Video konnte nicht gerendert werden";
 
 /* Permissions */
 "permission.camera.title" = "Kamerazugriff erforderlich";

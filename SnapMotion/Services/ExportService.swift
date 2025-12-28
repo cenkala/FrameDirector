@@ -73,16 +73,27 @@ actor ExportService {
             
             var lines: [String] = []
             if !credits.director.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                lines.append("Director: \(credits.director)")
+                lines.append("\(String(localized: "titleCredits.director")): \(credits.director)")
             }
             if !credits.animator.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                lines.append("Animator: \(credits.animator)")
+                lines.append("\(String(localized: "titleCredits.animator")): \(credits.animator)")
             }
             if !credits.music.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                lines.append("Music: \(credits.music)")
+                lines.append("\(String(localized: "titleCredits.music")): \(credits.music)")
             }
             if !credits.thanks.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                lines.append("Thanks: \(credits.thanks)")
+                lines.append("\(String(localized: "titleCredits.thanks")): \(credits.thanks)")
+            }
+            
+            for extra in credits.extras {
+                let label = extra.label.trimmingCharacters(in: .whitespacesAndNewlines)
+                let value = extra.value.trimmingCharacters(in: .whitespacesAndNewlines)
+                
+                if label.isEmpty, !value.isEmpty {
+                    lines.append(value)
+                } else if !label.isEmpty, !value.isEmpty {
+                    lines.append("\(label): \(value)")
+                }
             }
             
             return lines.isEmpty ? nil : lines.joined(separator: "\n")
@@ -108,9 +119,9 @@ actor ExportService {
         var errorDescription: String? {
             switch self {
             case .noFrames:
-                return "No frames to export"
+                return String(localized: "error.export.noFrames")
             case .renderFailed:
-                return "Failed to render video"
+                return String(localized: "error.export.renderFailed")
             }
         }
     }

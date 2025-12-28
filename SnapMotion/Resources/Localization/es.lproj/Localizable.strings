@@ -57,11 +57,15 @@
 /* Editor */
 "editor.title" = "Editor";
 "editor.fps" = "FPS";
+"editor.duration" = "DURACIÓN";
 "editor.play" = "Reproducir";
 "editor.pause" = "Pausar";
 "editor.addFrame" = "Añadir fotograma";
+"editor.addTitleCredits" = "Agregar título/créditos";
 "editor.frames" = "Fotogramas";
 "editor.noFrames" = "Aún no hay fotogramas";
+"editor.emptyState.addFramesHelp" = "Agrega fotogramas para empezar a crear tu video";
+"editor.loadingFrame" = "Cargando fotograma...";
 "editor.exporting" = "Exportando...";
 "editor.deleteFrame" = "Eliminar fotograma";
 "editor.duplicateFrame" = "Duplicar fotograma";
@@ -72,20 +76,28 @@
 "editor.titleCredits" = "Título y créditos";
 "editor.freeLimit" = "Usuarios gratuitos: máx 5 segundos";
 "editor.proFeature" = "Función Pro";
+"editor.timeline.title" = "TÍTULO";
+"editor.timeline.credits" = "CRÉDITOS";
 
 /* Title & Credits */
 "titleCredits.title" = "Título y créditos";
 "titleCredits.titleCard" = "Tarjeta de título";
+"titleCredits.titleCard.optionalHelp" = "Opcional: Déjalo vacío para omitir la tarjeta de título";
 "titleCredits.titlePlaceholder" = "Ingrese título...";
 "titleCredits.credits" = "Créditos";
+"titleCredits.credits.optionalHelp" = "Opcional: Déjalo vacío para omitir los créditos";
 "titleCredits.creditsMode" = "Modo de créditos";
 "titleCredits.plainCredits" = "Texto simple";
 "titleCredits.structuredCredits" = "Estructurado";
+"titleCredits.structured.proInfo" = "Los créditos estructurados son una función Pro";
 "titleCredits.plainPlaceholder" = "Ingrese créditos...";
 "titleCredits.director" = "Director";
 "titleCredits.animator" = "Animador";
 "titleCredits.music" = "Música";
 "titleCredits.thanks" = "Agradecimientos";
+"titleCredits.addExtraField" = "Agregar campo";
+"titleCredits.extraFieldLabel" = "Rol";
+"titleCredits.extraFieldValue" = "Nombre";
 
 /* Player */
 "player.title" = "Reproductor";
@@ -122,6 +134,19 @@
 "error.importFailed" = "Importación fallida";
 "error.projectLimit" = "Los usuarios gratuitos solo pueden crear 1 proyecto";
 "error.cannotDelete" = "Los usuarios gratuitos no pueden eliminar proyectos";
+"error.photoLibraryAccess.saveVideo" = "Se requiere acceso a Fotos para guardar el video. Actívalo en Ajustes.";
+"error.camera.noAvailableCamera" = "No hay cámara disponible";
+"error.camera.cannotAddInput" = "No se puede añadir la entrada de cámara";
+"error.camera.cannotAddOutput" = "No se puede añadir la salida de captura";
+"error.camera.captureFailed" = "La captura falló";
+"error.storage.compressionFailed" = "No se pudo comprimir la imagen";
+"error.storage.saveFailed" = "No se pudo guardar el archivo";
+"error.render.noFrames" = "No hay fotogramas para renderizar";
+"error.render.writingFailed" = "Falló la escritura del video";
+"error.render.pixelBufferFailed" = "No se pudo crear el búfer de píxeles";
+"error.render.appendFailed" = "No se pudo añadir el fotograma";
+"error.export.noFrames" = "No hay fotogramas para exportar";
+"error.export.renderFailed" = "No se pudo renderizar el video";
 
 /* Permissions */
 "permission.camera.title" = "Acceso a cámara requerido";

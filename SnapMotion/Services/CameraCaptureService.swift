@@ -168,15 +168,15 @@ final class CameraCaptureService: NSObject {
         var errorDescription: String? {
             switch self {
             case .notAuthorized:
-                return "Camera permission is required"
+                return String(localized: "error.cameraPermission")
             case .noCameraAvailable:
-                return "No camera available"
+                return String(localized: "error.camera.noAvailableCamera")
             case .cannotAddInput:
-                return "Cannot add camera input"
+                return String(localized: "error.camera.cannotAddInput")
             case .cannotAddOutput:
-                return "Cannot add capture output"
+                return String(localized: "error.camera.cannotAddOutput")
             case .captureFailed:
-                return "Capture failed"
+                return String(localized: "error.camera.captureFailed")
             }
         }
     }

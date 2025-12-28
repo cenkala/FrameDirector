@@ -15,6 +15,7 @@ final class EntitlementService: NSObject {
     
     private(set) var isPro: Bool = false
     private(set) var isConfigured: Bool = false
+    private(set) var hasCompletedInitialEntitlementSync: Bool = false
     private(set) var latestCustomerInfo: CustomerInfo?
     private(set) var lastCustomerInfoUpdate: Date?
     
@@ -46,6 +47,7 @@ final class EntitlementService: NSObject {
     }
     
     func checkEntitlements() async {
+        defer { hasCompletedInitialEntitlementSync = true }
         do {
             let customerInfo = try await Purchases.shared.customerInfo()
             updateEntitlements(customerInfo: customerInfo)

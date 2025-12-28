@@ -57,11 +57,15 @@
 /* Editor */
 "editor.title" = "Editör";
 "editor.fps" = "FPS";
+"editor.duration" = "SÜRE";
 "editor.play" = "Oynat";
 "editor.pause" = "Duraklat";
 "editor.addFrame" = "Kare Ekle";
+"editor.addTitleCredits" = "Başlık/Jenerik Ekle";
 "editor.frames" = "Kareler";
 "editor.noFrames" = "Henüz kare yok";
+"editor.emptyState.addFramesHelp" = "Videonu oluşturmaya başlamak için kare ekle";
+"editor.loadingFrame" = "Kare yükleniyor...";
 "editor.exporting" = "Dışa aktarılıyor...";
 "editor.deleteFrame" = "Kare Sil";
 "editor.duplicateFrame" = "Kare Kopyala";
@@ -72,20 +76,28 @@
 "editor.titleCredits" = "Başlık & Jenerik";
 "editor.freeLimit" = "Ücretsiz kullanıcılar: max 5 saniye";
 "editor.proFeature" = "Pro Özellik";
+"editor.timeline.title" = "BAŞLIK";
+"editor.timeline.credits" = "JENERİK";
 
 /* Title & Credits */
 "titleCredits.title" = "Başlık & Jenerik";
 "titleCredits.titleCard" = "Başlık Kartı";
+"titleCredits.titleCard.optionalHelp" = "İsteğe bağlı: Başlık kartını atlamak için boş bırakın";
 "titleCredits.titlePlaceholder" = "Başlık girin...";
 "titleCredits.credits" = "Jenerik";
+"titleCredits.credits.optionalHelp" = "İsteğe bağlı: Jeneriği atlamak için boş bırakın";
 "titleCredits.creditsMode" = "Jenerik Modu";
 "titleCredits.plainCredits" = "Düz Metin";
 "titleCredits.structuredCredits" = "Yapılandırılmış";
+"titleCredits.structured.proInfo" = "Yapılandırılmış jenerik Pro özelliğidir";
 "titleCredits.plainPlaceholder" = "Jenerik girin...";
 "titleCredits.director" = "Yönetmen";
 "titleCredits.animator" = "Animatör";
 "titleCredits.music" = "Müzik";
 "titleCredits.thanks" = "Teşekkürler";
+"titleCredits.addExtraField" = "Alan Ekle";
+"titleCredits.extraFieldLabel" = "Rol";
+"titleCredits.extraFieldValue" = "İsim";
 
 /* Player */
 "player.title" = "Oynatıcı";
@@ -122,6 +134,19 @@
 "error.importFailed" = "İçe aktarma başarısız";
 "error.projectLimit" = "Ücretsiz kullanıcılar sadece 1 proje oluşturabilir";
 "error.cannotDelete" = "Ücretsiz kullanıcılar proje silemez";
+"error.photoLibraryAccess.saveVideo" = "Videoyu kaydetmek için Fotoğraflar erişimi gerekli. Lütfen Ayarlar'dan izin verin.";
+"error.camera.noAvailableCamera" = "Kullanılabilir kamera yok";
+"error.camera.cannotAddInput" = "Kamera girişi eklenemedi";
+"error.camera.cannotAddOutput" = "Kayıt çıktısı eklenemedi";
+"error.camera.captureFailed" = "Çekim başarısız";
+"error.storage.compressionFailed" = "Görsel sıkıştırılamadı";
+"error.storage.saveFailed" = "Dosya kaydedilemedi";
+"error.render.noFrames" = "İşlenecek kare yok";
+"error.render.writingFailed" = "Video yazma başarısız";
+"error.render.pixelBufferFailed" = "Piksel arabelleği oluşturulamadı";
+"error.render.appendFailed" = "Kare eklenemedi";
+"error.export.noFrames" = "Dışa aktarılacak kare yok";
+"error.export.renderFailed" = "Video işlenemedi";
 
 /* Permissions */
 "permission.camera.title" = "Kamera Erişimi Gerekli";

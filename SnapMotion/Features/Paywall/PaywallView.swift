@@ -73,7 +73,7 @@ struct PaywallView: View {
                 Text(LocalizedStringKey("paywall.hero.beforePro"))
                     .font(.title3.weight(.semibold))
 
-                Text("PRO")
+                Text(LocalizedStringKey("settings.membership.pro"))
                     .font(.title3.weight(.bold))
                     .foregroundStyle(.black)
                     .padding(.horizontal, 10)
