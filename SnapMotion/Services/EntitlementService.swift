@@ -27,8 +27,13 @@ final class EntitlementService: NSObject {
     
     func configure() {
         guard !isConfigured else { return }
-
-        let apiKey = revenueCatAPIKey()
+        
+        #if DEBUG
+        let apiKey = "test_ockQtixmiHMimpWdEquWGgBwAoG"
+        #else
+        let apiKey = "appl_msoSnomJtZvouslRgkiSuJWgoZX"
+        #endif
+        
         Purchases.configure(withAPIKey: apiKey)
 
         #if DEBUG
@@ -108,31 +113,6 @@ final class EntitlementService: NSObject {
     var activeSubscriptionIdentifiers: [String] {
         Array(latestCustomerInfo?.activeSubscriptions ?? [])
             .sorted()
-    }
-
-    private func revenueCatAPIKey() -> String {
-        #if DEBUG
-        let infoPlistKey = "RevenueCatAPIKeyDebug"
-        let environmentKey = "REVENUECAT_API_KEY_DEBUG"
-        #else
-        let infoPlistKey = "RevenueCatAPIKeyRelease"
-        let environmentKey = "REVENUECAT_API_KEY_RELEASE"
-        #endif
-
-        let rawValue = Bundle.main.object(forInfoDictionaryKey: infoPlistKey) as? String
-        let infoPlistValue = (rawValue ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        if !infoPlistValue.isEmpty { return infoPlistValue }
-
-        let environmentValue = (ProcessInfo.processInfo.environment[environmentKey] ?? "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        if !environmentValue.isEmpty { return environmentValue }
-
-        #if DEBUG
-        print("RevenueCat API key not found in Info.plist (\(infoPlistKey)) or environment (\(environmentKey)). Falling back to test key for DEBUG.")
-        return "test_ockQtixmiHMimpWdEquWGgBwAoG"
-        #else
-        preconditionFailure("Missing or empty RevenueCat API key. Expected Info.plist key: \(infoPlistKey) (or environment: \(environmentKey)).")
-        #endif
     }
 }
 
