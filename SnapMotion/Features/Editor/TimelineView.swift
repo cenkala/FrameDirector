@@ -218,6 +218,7 @@ struct TimelineView: View {
         GeometryReader { geometry in
             ZStack {
                 timelineScrollView(in: geometry)
+                playheadOverlay(in: geometry)
                 plusMenuOverlay
             }
         }
@@ -225,10 +226,23 @@ struct TimelineView: View {
         .clipped()
     }
 
+    private func playheadOverlay(in geometry: GeometryProxy) -> some View {
+        let clampedX = min(max(0, scrollAnchorX), 1)
+        let x = geometry.size.width * clampedX
+        let y = metrics.rowHeight / 2
+
+        return RoundedRectangle(cornerRadius: 6, style: .continuous)
+            .stroke(Color.blue, lineWidth: metrics.centerStrokeWidth)
+            .frame(width: metrics.frameSize + 10, height: metrics.frameSize + 10)
+            .position(x: x, y: y)
+            .allowsHitTesting(false)
+    }
+
     @ViewBuilder
     private func timelineScrollView(in geometry: GeometryProxy) -> some View {
         if #available(iOS 17.0, *) {
             let anchor = UnitPoint(x: min(max(0, scrollAnchorX), 1), y: 0.5)
+            let sideInset = max(0, (geometry.size.width - metrics.frameSize) / 2)
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: metrics.spacing) {
                     timelineItemsContent(in: geometry)
@@ -237,6 +251,7 @@ struct TimelineView: View {
                 .padding(.horizontal, 2)
                 .animation(.spring(response: 0.3), value: dropIndicatorIndex)
             }
+            .contentMargins(.horizontal, sideInset, for: .scrollContent)
             .scrollPosition(id: $scrollPosition, anchor: anchor)
             .scrollTargetBehavior(.viewAligned)
             .onChange(of: scrollPosition) { _, newValue in
@@ -257,11 +272,12 @@ struct TimelineView: View {
                 }
             }
         } else {
+            let sideInset = max(0, (geometry.size.width - metrics.frameSize) / 2)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: metrics.spacing) {
                     timelineItemsContent(in: geometry)
                 }
-                .padding(.horizontal, 2)
+                .padding(.horizontal, sideInset + 2)
             }
         }
     }
@@ -519,7 +535,7 @@ private struct SpecialTimelineFrameView: View {
                 .fill(Color.black.opacity(0.65))
                 .overlay {
                     RoundedRectangle(cornerRadius: 4, style: .continuous)
-                        .strokeBorder(isSelected ? Color.accentColor.opacity(0.9) : Color.white.opacity(0.10), lineWidth: isSelected ? 2 : 1)
+                        .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
                 }
 
             Image(systemName: systemImage)
@@ -562,7 +578,7 @@ struct SingleFrameView: View {
             .overlay {
                 RoundedRectangle(cornerRadius: 4, style: .continuous)
                     .inset(by: 1.5)
-                    .stroke(isSelected ? AppTheme.Colors.accent : Color.clear, lineWidth: 3)
+                    .stroke(Color.clear, lineWidth: 3)
             }
             .onTapGesture {
                 onSelect()

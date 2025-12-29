@@ -31,7 +31,7 @@ struct EditorView: View {
     @State private var audioImportError: String?
     @State private var timelineScrollPosition: Int?
     @State private var audioScrollPosition: Int?
-    @State private var playheadPosition: CGFloat = 0.25
+    @State private var playheadPosition: CGFloat = 0.5
     init(project: MovieProject, modelContext: ModelContext) {
         self.project = project
         self.viewModel = EditorViewModel(project: project, modelContext: modelContext)

@@ -40,7 +40,7 @@ struct FrameThumbnailView: View {
             }
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .strokeBorder(isSelected ? AppTheme.Colors.accent : Color.clear, lineWidth: 3)
+                    .strokeBorder(Color.clear, lineWidth: 3)
             )
             .contextMenu {
                 Button(role: .destructive) {
