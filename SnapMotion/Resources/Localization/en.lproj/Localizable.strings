@@ -35,6 +35,7 @@
 
 /* Create Project Flow */
 "create.title" = "Create Project";
+"create.projectName" = "Project Name";
 "create.capture" = "Capture";
 "create.import" = "Import";
 "create.camera" = "Camera";

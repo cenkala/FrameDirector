@@ -12,7 +12,8 @@ struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel: HomeViewModel?
     @State private var paywallPresenter = PaywallPresenter.shared
-    @State private var showCreateFlow = false
+    @State private var showCreateProjectAlert = false
+    @State private var newProjectTitle = ""
     @State private var showSettings = false
     @State private var selectedProject: MovieProject?
     @State private var showEditor = false
@@ -38,17 +39,27 @@ struct HomeView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showCreateFlow) {
-                CreateMovieFlowView(onProjectCreated: { project in
-                    selectedProject = project
-                    showEditor = true
-                })
-            }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
             }
             .sheet(isPresented: $paywallPresenter.shouldShowPaywall) {
                 PaywallView()
+            }
+            .alert(LocalizedStringKey("create.title"), isPresented: $showCreateProjectAlert) {
+                TextField(LocalizedStringKey("create.projectName"), text: $newProjectTitle)
+                
+                Button {
+                    showCreateProjectAlert = false
+                } label: {
+                    Text(LocalizedStringKey("general.cancel"))
+                }
+                
+                Button {
+                    createProjectFromAlert()
+                } label: {
+                    Text(LocalizedStringKey("general.done"))
+                }
+                .disabled(newProjectTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
             .navigationDestination(isPresented: $showEditor) {
                 if let project = selectedProject {
@@ -69,11 +80,6 @@ struct HomeView: View {
             }
             paywallPresenter.showPaywallIfNeeded()
             viewModel?.loadProjects()
-        }
-        .onChange(of: showCreateFlow) { _, isPresented in
-            if !isPresented {
-                viewModel?.loadProjects()
-            }
         }
         .onChange(of: showEditor) { _, isPresented in
             if !isPresented {
@@ -188,10 +194,22 @@ struct HomeView: View {
         guard let viewModel = viewModel else { return }
         
         if viewModel.canCreateProject() {
-            showCreateFlow = true
+            newProjectTitle = ""
+            showCreateProjectAlert = true
         } else {
             paywallPresenter.presentPaywall()
         }
+    }
+    
+    private func createProjectFromAlert() {
+        guard let viewModel = viewModel else { return }
+        
+        let title = newProjectTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty else { return }
+        
+        let project = viewModel.createProject(title: title)
+        selectedProject = project
+        showEditor = true
     }
 }
 

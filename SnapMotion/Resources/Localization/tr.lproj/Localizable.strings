@@ -35,6 +35,7 @@
 
 /* Create Project Flow */
 "create.title" = "Proje Oluştur";
+"create.projectName" = "Proje Adı";
 "create.capture" = "Çek";
 "create.import" = "İçe Aktar";
 "create.camera" = "Kamera";

@@ -77,7 +77,7 @@ struct EditorView: View {
                 } label: {
                     Image(systemName: "square.and.arrow.up.fill")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(FeatureGateService.shared.isPro ? AnyShapeStyle(Color.white) : AnyShapeStyle(proGradient))
+                        .foregroundStyle(FeatureGateService.shared.isPro ? AnyShapeStyle(.primary) : AnyShapeStyle(proGradient))
                         .frame(width: 36, height: 36)
                 }
                 .disabled(!viewModel.canExport || isExporting)
