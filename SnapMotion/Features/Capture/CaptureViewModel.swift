@@ -27,7 +27,7 @@ final class CaptureViewModel {
     var showGrid = false
     var voiceCommandEnabled = false
     var isCapturingPhoto = false
-    private let voiceCommandThreshold: Float = -30.0
+    private let voiceCommandThreshold: Float = -25.0
     private var audioRecorder: AVAudioRecorder?
     private var voiceCommandTimer: Timer?
     

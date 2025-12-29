@@ -559,6 +559,11 @@ struct SingleFrameView: View {
                         .offset(x: -4, y: -4)
                 }
             }
+            .overlay {
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .inset(by: 1.5)
+                    .stroke(isSelected ? AppTheme.Colors.accent : Color.clear, lineWidth: 3)
+            }
             .onTapGesture {
                 onSelect()
             }
@@ -572,8 +577,6 @@ struct TimelineThumbnailView: View {
     let isSelected: Bool
 
     @State private var thumbnailImage: UIImage?
-    private let cornerRadius: CGFloat = 4
-    private let selectionLineWidth: CGFloat = 3
 
     var body: some View {
         ZStack {
@@ -589,12 +592,6 @@ struct TimelineThumbnailView: View {
                             .foregroundColor(.gray.opacity(0.7))
                     )
             }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .inset(by: selectionLineWidth / 2)
-                .stroke(isSelected ? AppTheme.Colors.accent : Color.clear, lineWidth: selectionLineWidth)
         }
         .task(id: frame.localFileName) {
             thumbnailImage = await MovieStorage.shared.loadFrame(fileName: frame.localFileName, projectId: projectId)

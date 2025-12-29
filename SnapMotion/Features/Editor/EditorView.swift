@@ -667,6 +667,8 @@ struct EditorView: View {
             }
         }
 
+        viewModel.refreshPreviewOverlayForCurrentFrameIndex()
+
         let frames = viewModel.sortedFrames
         guard !frames.isEmpty else {
             currentFrameImage = nil

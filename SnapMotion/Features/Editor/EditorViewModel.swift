@@ -285,27 +285,9 @@ final class EditorViewModel {
         guard globalIndex >= 0 && globalIndex < totalFrameCount else { return }
         overlayTask?.cancel()
         overlayTask = nil
-        if !isPlaying {
-            previewOverlay = .none
-        }
         currentFrameIndex = globalIndex
 
-        if isPlaying { return }
-        switch timelineItems[globalIndex] {
-        case .singleFrame:
-            previewOverlay = .none
-        case .titleFrame:
-            let titleText = project.titleCardText?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            previewOverlay = titleText.isEmpty ? .none : .title(text: titleText)
-        case .creditsFrame(let index, let total):
-            let creditsText = ExportService.buildCreditsText(project: project) ?? ""
-            guard !creditsText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                previewOverlay = .none
-                return
-            }
-            let progress = total <= 1 ? 1.0 : Double(index) / Double(total - 1)
-            previewOverlay = .credits(text: creditsText, progress: progress)
-        }
+        refreshPreviewOverlayForCurrentFrameIndex()
     }
 
     func getGlobalFrameIndex(for frame: FrameAsset) -> Int {
@@ -438,8 +420,8 @@ final class EditorViewModel {
         project.titleCardText = nil
         project.updatedAt = Date()
         try? modelContext.save()
-        previewOverlay = .none
         clampCurrentFrameIndex()
+        refreshPreviewOverlayForCurrentFrameIndex()
     }
 
     func removeCredits() {
@@ -449,10 +431,37 @@ final class EditorViewModel {
         project.creditsModeEnum = .plain
         project.updatedAt = Date()
         try? modelContext.save()
-        previewOverlay = .none
         clampCurrentFrameIndex()
+        refreshPreviewOverlayForCurrentFrameIndex()
     }
     
+    func refreshPreviewOverlayForCurrentFrameIndex() {
+        guard !isPlaying else { return }
+        guard currentFrameIndex >= 0 && currentFrameIndex < totalFrameCount else {
+            previewOverlay = .none
+            return
+        }
+
+        switch timelineItems[currentFrameIndex] {
+        case .singleFrame:
+            previewOverlay = .none
+
+        case .titleFrame:
+            let titleText = project.titleCardText?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            previewOverlay = titleText.isEmpty ? .none : .title(text: titleText)
+
+        case .creditsFrame(let index, let total):
+            let creditsText = ExportService.buildCreditsText(project: project) ?? ""
+            let trimmed = creditsText.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else {
+                previewOverlay = .none
+                return
+            }
+            let progress = total <= 1 ? 1.0 : Double(index) / Double(total - 1)
+            previewOverlay = .credits(text: trimmed, progress: progress)
+        }
+    }
+
     func togglePlayback() {
         if isPlaying {
             stopPlayback()
