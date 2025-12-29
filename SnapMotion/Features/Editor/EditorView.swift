@@ -399,6 +399,22 @@ struct EditorView: View {
 
                 Divider()
 
+                Button(role: .destructive) {
+                    viewModel.removeTitleCard()
+                } label: {
+                    Label(LocalizedStringKey("editor.deleteTitle"), systemImage: "text.badge.xmark")
+                }
+                .disabled(!viewModel.hasTitleCard)
+
+                Button(role: .destructive) {
+                    viewModel.removeCredits()
+                } label: {
+                    Label(LocalizedStringKey("editor.deleteCredits"), systemImage: "list.bullet.clipboard")
+                }
+                .disabled(!viewModel.hasCredits)
+
+                Divider()
+
                 Button {
                     viewModel.showTitleCredits = true
                 } label: {

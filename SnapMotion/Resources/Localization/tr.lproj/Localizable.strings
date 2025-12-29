@@ -70,6 +70,8 @@
 "editor.exporting" = "Dışa aktarılıyor...";
 "editor.deleteFrame" = "Kare Sil";
 "editor.duplicateFrame" = "Kare Kopyala";
+"editor.deleteTitle" = "Başlık Sil";
+"editor.deleteCredits" = "Jenerik Sil";
 "editor.export" = "Dışa Aktar";
 "editor.exportOptions.message" = "Ne yapmak istersin?";
 "editor.exportSaved.title" = "Kaydedildi";

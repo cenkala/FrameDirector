@@ -70,6 +70,8 @@
 "editor.exporting" = "Exportando...";
 "editor.deleteFrame" = "Eliminar fotograma";
 "editor.duplicateFrame" = "Duplicar fotograma";
+"editor.deleteTitle" = "Eliminar título";
+"editor.deleteCredits" = "Eliminar créditos";
 "editor.export" = "Exportar";
 "editor.exportOptions.message" = "¿Qué te gustaría hacer?";
 "editor.exportSaved.title" = "Guardado";

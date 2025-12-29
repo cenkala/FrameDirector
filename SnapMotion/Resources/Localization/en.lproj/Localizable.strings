@@ -70,6 +70,8 @@
 "editor.exporting" = "Exporting...";
 "editor.deleteFrame" = "Delete Frame";
 "editor.duplicateFrame" = "Duplicate Frame";
+"editor.deleteTitle" = "Delete Title";
+"editor.deleteCredits" = "Delete Credits";
 "editor.export" = "Export";
 "editor.exportOptions.message" = "What would you like to do?";
 "editor.exportSaved.title" = "Saved";

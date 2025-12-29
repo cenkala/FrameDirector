@@ -432,6 +432,26 @@ final class EditorViewModel {
         project.updatedAt = Date()
         try? modelContext.save()
     }
+
+    func removeTitleCard() {
+        stopPlayback()
+        project.titleCardText = nil
+        project.updatedAt = Date()
+        try? modelContext.save()
+        previewOverlay = .none
+        clampCurrentFrameIndex()
+    }
+
+    func removeCredits() {
+        stopPlayback()
+        project.plainCreditsText = nil
+        project.structuredCreditsJSON = nil
+        project.creditsModeEnum = .plain
+        project.updatedAt = Date()
+        try? modelContext.save()
+        previewOverlay = .none
+        clampCurrentFrameIndex()
+    }
     
     func togglePlayback() {
         if isPlaying {
@@ -690,6 +710,15 @@ final class EditorViewModel {
             frame.orderIndex = index
         }
         project.updatedAt = Date()
+    }
+
+    private func clampCurrentFrameIndex() {
+        let total = totalFrameCount
+        guard total > 0 else {
+            currentFrameIndex = 0
+            return
+        }
+        currentFrameIndex = min(max(currentFrameIndex, 0), total - 1)
     }
 }
 

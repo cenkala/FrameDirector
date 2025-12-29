@@ -572,6 +572,8 @@ struct TimelineThumbnailView: View {
     let isSelected: Bool
 
     @State private var thumbnailImage: UIImage?
+    private let cornerRadius: CGFloat = 4
+    private let selectionLineWidth: CGFloat = 3
 
     var body: some View {
         ZStack {
@@ -579,18 +581,20 @@ struct TimelineThumbnailView: View {
                 Image(uiImage: thumbnailImage)
                     .resizable()
                     .scaledToFill()
-                    .clipShape(RoundedRectangle(cornerRadius: 3))
             } else {
                 Color.gray.opacity(0.3)
-                    .clipShape(RoundedRectangle(cornerRadius: 3))
                     .overlay(
                         Image(systemName: "photo")
                             .font(.system(size: 12))
                             .foregroundColor(.gray.opacity(0.7))
                     )
             }
-
-            // Selection indicator removed
+        }
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .inset(by: selectionLineWidth / 2)
+                .stroke(isSelected ? AppTheme.Colors.accent : Color.clear, lineWidth: selectionLineWidth)
         }
         .task(id: frame.localFileName) {
             thumbnailImage = await MovieStorage.shared.loadFrame(fileName: frame.localFileName, projectId: projectId)
