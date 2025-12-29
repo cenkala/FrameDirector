@@ -75,6 +75,7 @@
 "editor.exportSaved.title" = "Saved";
 "editor.exportSaved.message" = "Your video has been saved to Photos.";
 "editor.titleCredits" = "Title & Credits";
+"editor.addAudio" = "Add Audio";
 "editor.freeLimit" = "Free users: max 5 seconds";
 "editor.proFeature" = "Pro Feature";
 "editor.timeline.title" = "TITLE";

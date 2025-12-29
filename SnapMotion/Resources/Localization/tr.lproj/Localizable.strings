@@ -75,6 +75,7 @@
 "editor.exportSaved.title" = "Kaydedildi";
 "editor.exportSaved.message" = "Videon Fotoğraflar'a kaydedildi.";
 "editor.titleCredits" = "Başlık & Jenerik";
+"editor.addAudio" = "Ses Ekle";
 "editor.freeLimit" = "Ücretsiz kullanıcılar: max 5 saniye";
 "editor.proFeature" = "Pro Özellik";
 "editor.timeline.title" = "BAŞLIK";

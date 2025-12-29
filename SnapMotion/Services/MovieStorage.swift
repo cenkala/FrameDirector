@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import AVFoundation
 
 actor MovieStorage {
     static let shared = MovieStorage()
@@ -25,6 +26,10 @@ actor MovieStorage {
     
     func projectDirectory(for projectId: UUID) -> URL {
         moviesDirectory.appendingPathComponent(projectId.uuidString)
+    }
+
+    func audioFileURL(projectId: UUID, fileName: String) -> URL {
+        projectDirectory(for: projectId).appendingPathComponent(fileName)
     }
 
     nonisolated static func exportedVideoFileURL(projectId: UUID) -> URL {
@@ -91,6 +96,34 @@ actor MovieStorage {
         
         try FileManager.default.copyItem(at: url, to: destination)
         return destination
+    }
+
+    func saveAudioFile(sourceURL: URL, projectId: UUID) async throws -> (fileName: String, displayName: String, durationSeconds: Double) {
+        let projectDir = projectDirectory(for: projectId)
+        try FileManager.default.createDirectory(at: projectDir, withIntermediateDirectories: true)
+
+        let ext = sourceURL.pathExtension.isEmpty ? "m4a" : sourceURL.pathExtension
+        let fileName = "audio-\(UUID().uuidString).\(ext)"
+        let destinationURL = projectDir.appendingPathComponent(fileName)
+
+        if FileManager.default.fileExists(atPath: destinationURL.path) {
+            try FileManager.default.removeItem(at: destinationURL)
+        }
+
+        try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
+
+        let asset = AVURLAsset(url: destinationURL)
+        let duration = try await asset.load(.duration)
+        let durationSeconds = max(0, duration.seconds.isFinite ? duration.seconds : 0)
+        let displayName = sourceURL.lastPathComponent
+
+        return (fileName: fileName, displayName: displayName, durationSeconds: durationSeconds)
+    }
+
+    func deleteAudioFile(projectId: UUID, fileName: String) throws {
+        let url = audioFileURL(projectId: projectId, fileName: fileName)
+        guard FileManager.default.fileExists(atPath: url.path) else { return }
+        try FileManager.default.removeItem(at: url)
     }
     
     func deleteProject(projectId: UUID) throws {

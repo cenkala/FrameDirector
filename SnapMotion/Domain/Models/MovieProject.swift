@@ -26,6 +26,12 @@ final class MovieProject {
     var creditsMode: String
     var plainCreditsText: String?
     var structuredCreditsJSON: String?
+
+    var audioFileName: String?
+    var audioDisplayName: String?
+    var audioSelectionStartSeconds: Double?
+    var audioSelectionEndSeconds: Double?
+    var audioDurationSeconds: Double?
     
     @Relationship(deleteRule: .cascade, inverse: \FrameAsset.project)
     var frames: [FrameAsset]

@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 import UIKit
 import Photos
+import UniformTypeIdentifiers
 
 struct EditorView: View {
     @Environment(\.modelContext) private var modelContext
@@ -26,6 +27,11 @@ struct EditorView: View {
     @State private var currentFrameImage: UIImage?
     @State private var exportShareURL: URL?
     @State private var showShareSheet = false
+    @State private var showAudioImporter = false
+    @State private var audioImportError: String?
+    @State private var timelineScrollPosition: Int?
+    @State private var audioScrollPosition: Int?
+    @State private var playheadPosition: CGFloat = 0.25
     init(project: MovieProject, modelContext: ModelContext) {
         self.project = project
         self.viewModel = EditorViewModel(project: project, modelContext: modelContext)
@@ -155,6 +161,40 @@ struct EditorView: View {
                 ShareSheet(activityItems: [url])
             }
         }
+        .fileImporter(
+            isPresented: $showAudioImporter,
+            allowedContentTypes: [UTType.audio]
+        ) { result in
+            switch result {
+            case .success(let url):
+                Task {
+                    do {
+                        try await viewModel.addAudio(fromPickedURL: url)
+                    } catch {
+                        await MainActor.run { audioImportError = error.localizedDescription }
+                    }
+                }
+            case .failure(let error):
+                audioImportError = error.localizedDescription
+            }
+        }
+        .alert(
+            LocalizedStringKey("error.general"),
+            isPresented: Binding(
+                get: { audioImportError != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        audioImportError = nil
+                    }
+                }
+            )
+        ) {
+            Button(LocalizedStringKey("general.ok"), role: .cancel) {
+                audioImportError = nil
+            }
+        } message: {
+            Text(audioImportError ?? "")
+        }
     }
     
     private var previewSection: some View {
@@ -175,6 +215,12 @@ struct EditorView: View {
                         .multilineTextAlignment(.center)
                 }
                 .padding(.horizontal, 24)
+            } else if viewModel.previewOverlay != .none {
+                ZStack {
+                    Color.black.opacity(0.92)
+                    PreviewTitleCreditsOverlay(overlay: viewModel.previewOverlay)
+                        .allowsHitTesting(false)
+                }
             } else if let currentFrameImage {
                 ZStack {
                     Image(uiImage: currentFrameImage)
@@ -330,23 +376,26 @@ struct EditorView: View {
             // Right side - Edit Menu
             Menu {
                 Button {
-                    viewModel.deleteFrame(at: viewModel.currentFrameIndex)
+                    if let frameIndex = viewModel.frameIndex(forTimelineIndex: viewModel.currentFrameIndex) {
+                        viewModel.deleteFrame(at: frameIndex)
+                    }
                 } label: {
                     Label(LocalizedStringKey("editor.deleteFrame"), systemImage: "trash")
                         .foregroundStyle(.red)
                 }
-                .disabled(viewModel.sortedFrames.isEmpty)
+                .disabled(viewModel.frameIndex(forTimelineIndex: viewModel.currentFrameIndex) == nil)
 
                 Button {
+                    guard let frameIndex = viewModel.frameIndex(forTimelineIndex: viewModel.currentFrameIndex) else { return }
                     if viewModel.canAddMoreFrames() {
-                        viewModel.duplicateFrame(at: viewModel.currentFrameIndex)
+                        viewModel.duplicateFrame(at: frameIndex)
                     } else {
                         paywallPresenter.presentPaywall()
                     }
                 } label: {
                     Label(LocalizedStringKey("editor.duplicateFrame"), systemImage: "doc.on.doc")
                 }
-                .disabled(viewModel.sortedFrames.isEmpty)
+                .disabled(viewModel.frameIndex(forTimelineIndex: viewModel.currentFrameIndex) == nil)
 
                 Divider()
 
@@ -387,24 +436,17 @@ struct EditorView: View {
     }
     
     private var timelineSection: some View {
-        let titleText = project.titleCardText?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let creditsText = ExportService.buildCreditsText(project: project) ?? ""
-        let hasTitle = !titleText.isEmpty
-        let hasCredits = !creditsText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let hasAudio = (project.audioFileName?.isEmpty == false)
+        let timelineMetrics: TimelineMetrics = hasAudio ? .compact : .regular
         
-        return HStack(spacing: 8) {
-            if hasTitle {
-                TimelineAuxChip(
-                    title: LocalizedStringKey("editor.timeline.title"),
-                    systemImage: "textformat",
-                    action: { viewModel.showTitleCardPreview() }
-                )
-            }
-            
+        return VStack(spacing: 8) {
             TimelineView(
                 timelineItems: viewModel.timelineItems,
                 projectId: project.id,
                 currentFrameIndex: $viewModel.currentFrameIndex,
+                scrollPosition: $timelineScrollPosition,
+                scrollAnchorX: playheadPosition,
+                metrics: timelineMetrics,
                 onDelete: { index in
                     viewModel.deleteFrame(at: index)
                 },
@@ -439,6 +481,9 @@ struct EditorView: View {
                 onAddTitleCredits: {
                     viewModel.showTitleCredits = true
                 },
+                onAddAudio: {
+                    showAudioImporter = true
+                },
                 onSelectFrame: { index in
                     viewModel.selectFrame(at: index)
                 },
@@ -446,15 +491,29 @@ struct EditorView: View {
                     viewModel.getGlobalFrameIndex(for: frame)
                 }
             )
-            .frame(height: 100)
-            
-            if hasCredits {
-                TimelineAuxChip(
-                    title: LocalizedStringKey("editor.timeline.credits"),
-                    systemImage: "list.bullet",
-                    action: { viewModel.showCreditsPreview() }
+
+            if hasAudio {
+                AudioTimelineView(
+                    viewModel: viewModel,
+                    height: timelineMetrics.rowHeight,
+                    scrollPosition: $audioScrollPosition,
+                    scrollAnchorX: playheadPosition,
+                    metrics: timelineMetrics
                 )
             }
+        }
+        .onChange(of: viewModel.currentFrameIndex) { _, _ in
+            updatePlayheadAnchor(metrics: timelineMetrics)
+        }
+        .onChange(of: viewModel.isPlaying) { _, _ in
+            updatePlayheadAnchor(metrics: timelineMetrics)
+        }
+    }
+
+    private func updatePlayheadAnchor(metrics: TimelineMetrics) {
+        timelineScrollPosition = viewModel.currentFrameIndex
+        if audioScrollPosition == nil || viewModel.isPlaying {
+            audioScrollPosition = viewModel.currentFrameIndex
         }
     }
     
@@ -583,17 +642,27 @@ struct EditorView: View {
     
     @MainActor
     private func loadCurrentFrameImage() async {
+        let total = viewModel.totalFrameCount
+        if total > 0 {
+            if viewModel.currentFrameIndex < 0 {
+                viewModel.currentFrameIndex = 0
+            } else if viewModel.currentFrameIndex >= total {
+                viewModel.currentFrameIndex = max(0, total - 1)
+            }
+        }
+
         let frames = viewModel.sortedFrames
         guard !frames.isEmpty else {
             currentFrameImage = nil
             return
         }
-        
-        let safeIndex = min(max(viewModel.currentFrameIndex, 0), frames.count - 1)
-        if safeIndex != viewModel.currentFrameIndex {
-            viewModel.currentFrameIndex = safeIndex
+
+        guard let frameIndex = viewModel.frameIndex(forTimelineIndex: viewModel.currentFrameIndex) else {
+            currentFrameImage = nil
+            return
         }
-        
+
+        let safeIndex = min(max(frameIndex, 0), frames.count - 1)
         let frame = frames[safeIndex]
         currentFrameImage = await MovieStorage.shared.loadFrame(fileName: frame.localFileName, projectId: project.id)
     }

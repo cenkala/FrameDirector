@@ -10,6 +10,7 @@ import UIKit
 
 actor ExportService {
     private let videoRenderer = VideoRenderer()
+    private let audioVideoMergeService = AudioVideoMergeService()
     private let storage = MovieStorage.shared
     
     func exportVideo(project: MovieProject) async throws -> URL {
@@ -33,10 +34,20 @@ actor ExportService {
             creditsText: creditsText,
             outputURL: tempURL
         )
+
+        let finalVideoURL: URL
+        if let mergedURL = try await mergeAudioIfNeeded(project: project, videoURL: tempURL) {
+            finalVideoURL = mergedURL
+        } else {
+            finalVideoURL = tempURL
+        }
         
-        let savedURL = try await storage.saveExportedVideo(tempURL, projectId: project.id)
+        let savedURL = try await storage.saveExportedVideo(finalVideoURL, projectId: project.id)
         
         try? FileManager.default.removeItem(at: tempURL)
+        if finalVideoURL != tempURL {
+            try? FileManager.default.removeItem(at: finalVideoURL)
+        }
         
         return savedURL
     }
@@ -110,6 +121,50 @@ actor ExportService {
         }
         
         return images
+    }
+
+    private func mergeAudioIfNeeded(project: MovieProject, videoURL: URL) async throws -> URL? {
+        guard let audioFileName = project.audioFileName, !audioFileName.isEmpty else { return nil }
+        let duration = max(0, project.audioDurationSeconds ?? 0)
+        guard duration > 0 else { return nil }
+
+        let start = max(0, project.audioSelectionStartSeconds ?? 0)
+        let end = max(0, min(project.audioSelectionEndSeconds ?? duration, duration))
+        guard end > start else { return nil }
+
+        let titleSeconds: Double = {
+            let titleText = project.titleCardText?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return titleText.isEmpty ? 0 : 2
+        }()
+        let creditsSeconds: Double = {
+            let creditsText = ExportService.buildCreditsText(project: project) ?? ""
+            let trimmed = creditsText.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { return 0 }
+            let lineCount = max(1, trimmed.split(whereSeparator: \.isNewline).count)
+            return max(4, min(24, 2.0 + (Double(lineCount) * 1.15)))
+        }()
+        let totalVideoSeconds = titleSeconds + project.duration + creditsSeconds
+        guard totalVideoSeconds > 0 else { return nil }
+
+        let segmentDurationSeconds = min(end - start, totalVideoSeconds)
+        guard segmentDurationSeconds > 0 else { return nil }
+
+        let audioURL = await storage.audioFileURL(projectId: project.id, fileName: audioFileName)
+
+        let mergedURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("mp4")
+
+        try await audioVideoMergeService.mergeVideo(
+            videoURL: videoURL,
+            audioURL: audioURL,
+            audioStartSeconds: start,
+            audioDurationSeconds: segmentDurationSeconds,
+            audioInsertAtSeconds: 0,
+            outputURL: mergedURL
+        )
+
+        return mergedURL
     }
     
     enum ExportError: LocalizedError {

@@ -25,6 +25,30 @@ private enum TimelineUI {
     static let endPlusAreaWidth: CGFloat = 600
 }
 
+struct TimelineMetrics: Equatable {
+    let frameSize: CGFloat
+    let spacing: CGFloat
+    let centerStrokeWidth: CGFloat
+    let rowHeight: CGFloat
+    let plusButtonSize: CGFloat
+
+    static let regular = TimelineMetrics(
+        frameSize: 72,
+        spacing: 6,
+        centerStrokeWidth: 3,
+        rowHeight: 120,
+        plusButtonSize: 36
+    )
+
+    static let compact = TimelineMetrics(
+        frameSize: 48,
+        spacing: 5,
+        centerStrokeWidth: 2,
+        rowHeight: 70,
+        plusButtonSize: 32
+    )
+}
+
 struct TimelineItemDropDelegate: DropDelegate {
     let targetIndex: Int
     let timelineItems: [TimelineItem]
@@ -106,6 +130,8 @@ struct TimelineCombinedDropDelegate: DropDelegate {
                 onSetStackId(frameId, nil)
                 onMoveFrameById(frameId, targetStartIndex)
                 return true
+            default:
+                return false
             }
         }
 
@@ -123,6 +149,9 @@ struct TimelineView: View {
     let timelineItems: [TimelineItem]
     let projectId: UUID
     @Binding var currentFrameIndex: Int
+    @Binding var scrollPosition: Int?
+    let scrollAnchorX: CGFloat
+    let metrics: TimelineMetrics
     let onDelete: (Int) -> Void
     let onDuplicate: (Int) -> Void
     let onMoveFrame: (Int, Int) -> Void
@@ -133,189 +162,196 @@ struct TimelineView: View {
     let onAddCamera: () -> Void
     let onAddPhotoLibrary: () -> Void
     let onAddTitleCredits: () -> Void
+    let onAddAudio: () -> Void
     let onSelectFrame: (Int) -> Void
     let getGlobalIndex: (FrameAsset) -> Int
 
     @State private var draggedTimelineItemId: String?
     @State private var draggedFrameId: UUID?
     @State private var dropIndicatorIndex: Int? = nil
-    @State private var scrollPosition: UUID?
     @State private var isUserScrolling = false
+
+    init(
+        timelineItems: [TimelineItem],
+        projectId: UUID,
+        currentFrameIndex: Binding<Int>,
+        scrollPosition: Binding<Int?>,
+        scrollAnchorX: CGFloat = 0.5,
+        metrics: TimelineMetrics = .regular,
+        onDelete: @escaping (Int) -> Void,
+        onDuplicate: @escaping (Int) -> Void,
+        onMoveFrame: @escaping (Int, Int) -> Void,
+        onMoveTimelineItem: @escaping (Int, Int) -> Void,
+        onSetStackId: @escaping (UUID, String?) -> Void,
+        onMoveFrameById: @escaping (UUID, Int) -> Void,
+        onTapAddToStack: @escaping (String) -> Void,
+        onAddCamera: @escaping () -> Void,
+        onAddPhotoLibrary: @escaping () -> Void,
+        onAddTitleCredits: @escaping () -> Void,
+        onAddAudio: @escaping () -> Void = { },
+        onSelectFrame: @escaping (Int) -> Void,
+        getGlobalIndex: @escaping (FrameAsset) -> Int
+    ) {
+        self.timelineItems = timelineItems
+        self.projectId = projectId
+        self._currentFrameIndex = currentFrameIndex
+        self._scrollPosition = scrollPosition
+        self.scrollAnchorX = scrollAnchorX
+        self.metrics = metrics
+        self.onDelete = onDelete
+        self.onDuplicate = onDuplicate
+        self.onMoveFrame = onMoveFrame
+        self.onMoveTimelineItem = onMoveTimelineItem
+        self.onSetStackId = onSetStackId
+        self.onMoveFrameById = onMoveFrameById
+        self.onTapAddToStack = onTapAddToStack
+        self.onAddCamera = onAddCamera
+        self.onAddPhotoLibrary = onAddPhotoLibrary
+        self.onAddTitleCredits = onAddTitleCredits
+        self.onAddAudio = onAddAudio
+        self.onSelectFrame = onSelectFrame
+        self.getGlobalIndex = getGlobalIndex
+    }
 
 
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                if #available(iOS 17.0, *) {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        LazyHStack(spacing: TimelineUI.spacing) {
-                            ForEach(Array(timelineItems.enumerated()), id: \.element.id) { index, item in
-                                if dropIndicatorIndex == index {
-                                    // Drop indicator
-                                    RoundedRectangle(cornerRadius: 2)
-                                        .fill(Color.accentColor)
-                                        .frame(width: 3, height: 100)
-                                        .transition(.scale)
-                                        .zIndex(1)
-                                }
-
-                                TimelineItemView(
-                                    item: item,
-                                    projectId: projectId,
-                                    currentFrameIndex: $currentFrameIndex,
-                                    onDelete: onDelete,
-                                    onDuplicate: onDuplicate,
-                                    onMoveFrame: onMoveFrame,
-                                    onMoveTimelineItem: onMoveTimelineItem,
-                                    onSetStackId: onSetStackId,
-                                    onMoveFrameById: onMoveFrameById,
-                                    onTapAddToStack: onTapAddToStack,
-                                    onSelectFrame: onSelectFrame,
-                                    getGlobalIndex: getGlobalIndex,
-                                    draggedTimelineItemId: $draggedTimelineItemId,
-                                    draggedFrameId: $draggedFrameId,
-                                    dropIndicatorIndex: $dropIndicatorIndex,
-                                    timelineItems: timelineItems,
-                                    indexInTimeline: index,
-                                    geometry: geometry
-                                )
-                                .zIndex((draggedTimelineItemId == item.id) ? 2 : 1)
-                                .scrollTransition { content, phase in
-                                    content
-                                        .opacity(phase.isIdentity ? 1.0 : 0.8)
-                                        .scaleEffect(phase.isIdentity ? 1.0 : 0.95)
-                                }
-                            }
-
-                            if dropIndicatorIndex == timelineItems.count {
-                                // Drop indicator at the end
-                                RoundedRectangle(cornerRadius: 2)
-                                    .fill(Color.accentColor)
-                                    .frame(width: 3, height: 100)
-                                    .transition(.scale)
-                                    .zIndex(1)
-                            }
-                        }
-                        .scrollTargetLayout()
-                        .padding(.horizontal, 2)
-                        .animation(.spring(response: 0.3), value: dropIndicatorIndex)
-                    }
-                    .contentMargins(.horizontal, (geometry.size.width - TimelineUI.frameSize) / 2, for: .scrollContent)
-                    .scrollPosition(id: $scrollPosition, anchor: .center)
-                    .scrollTargetBehavior(.viewAligned)
-                    .onChange(of: scrollPosition) { oldValue, newValue in
-                        guard let frameId = newValue else { return }
-                        // Find the frame with this ID
-                        var frameCount = 0
-                        for item in timelineItems {
-                            for frame in item.frames {
-                                if frame.id == frameId {
-                                    if currentFrameIndex != frameCount {
-                                        currentFrameIndex = frameCount
-                                    }
-                                    return
-                                }
-                                frameCount += 1
-                            }
-                        }
-                    }
-                    .onChange(of: currentFrameIndex) { oldValue, newValue in
-                        guard oldValue != newValue else { return }
-                        // Find frame by index and update scroll position
-                        var frameCount = 0
-                        for item in timelineItems {
-                            for frame in item.frames {
-                                if frameCount == newValue {
-                                    if scrollPosition != frame.id {
-                                        scrollPosition = frame.id
-                                    }
-                                    return
-                                }
-                                frameCount += 1
-                            }
-                        }
-                    }
-                    .onAppear {
-                        if let firstFrame = timelineItems.first?.frames.first {
-                            scrollPosition = firstFrame.id
-                        }
-                    }
-                } else {
-                    // iOS < 17 fallback: free scroll (no snapping)
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: TimelineUI.spacing) {
-                            ForEach(Array(timelineItems.enumerated()), id: \.element.id) { index, item in
-                                TimelineItemView(
-                                    item: item,
-                                    projectId: projectId,
-                                    currentFrameIndex: $currentFrameIndex,
-                                    onDelete: onDelete,
-                                    onDuplicate: onDuplicate,
-                                    onMoveFrame: onMoveFrame,
-                                    onMoveTimelineItem: onMoveTimelineItem,
-                                    onSetStackId: onSetStackId,
-                                    onMoveFrameById: onMoveFrameById,
-                                    onTapAddToStack: onTapAddToStack,
-                                    onSelectFrame: onSelectFrame,
-                                    getGlobalIndex: getGlobalIndex,
-                                    draggedTimelineItemId: $draggedTimelineItemId,
-                                    draggedFrameId: $draggedFrameId,
-                                    dropIndicatorIndex: $dropIndicatorIndex,
-                                    timelineItems: timelineItems,
-                                    indexInTimeline: index,
-                                    geometry: geometry
-                                )
-                            }
-                        }
-                        .padding(.horizontal, 2)
-                    }
-                }
-
-                // Fixed center selection frame
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .stroke(Color.blue, lineWidth: TimelineUI.centerStrokeWidth)
-                    .frame(width: TimelineUI.frameSize + 10, height: TimelineUI.frameSize + 10)
-                    .position(x: geometry.size.width / 2, y: 60)
-                    .allowsHitTesting(false)
-                
-                // Plus button at trailing edge
-                HStack {
-                    Spacer()
-                    Menu {
-                        Button {
-                            onAddCamera()
-                        } label: {
-                            Label(LocalizedStringKey("create.camera"), systemImage: "camera")
-                        }
-
-                        Button {
-                            onAddPhotoLibrary()
-                        } label: {
-                            Label(LocalizedStringKey("create.photoLibrary"), systemImage: "photo.on.rectangle")
-                        }
-
-                        Button {
-                            onAddTitleCredits()
-                        } label: {
-                            Label(LocalizedStringKey("editor.titleCredits"), systemImage: "text.alignleft")
-                        }
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.headline.weight(.bold))
-                            .foregroundStyle(.white)
-                            .frame(width: 36, height: 36)
-                            .background(Circle().fill(Color.accentColor))
-                    }
-                    .menuStyle(.borderlessButton)
-                    .padding(.trailing, 16)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-                .allowsHitTesting(true)
+                timelineScrollView(in: geometry)
+                plusMenuOverlay
             }
         }
-        .frame(height: 120)
-        .clipped() // Prevent vertical scrolling
+        .frame(height: metrics.rowHeight)
+        .clipped()
     }
+
+    @ViewBuilder
+    private func timelineScrollView(in geometry: GeometryProxy) -> some View {
+        if #available(iOS 17.0, *) {
+            let anchor = UnitPoint(x: min(max(0, scrollAnchorX), 1), y: 0.5)
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(spacing: metrics.spacing) {
+                    timelineItemsContent(in: geometry)
+                }
+                .scrollTargetLayout()
+                .padding(.horizontal, 2)
+                .animation(.spring(response: 0.3), value: dropIndicatorIndex)
+            }
+            .scrollPosition(id: $scrollPosition, anchor: anchor)
+            .scrollTargetBehavior(.viewAligned)
+            .onChange(of: scrollPosition) { _, newValue in
+                guard let index = newValue else { return }
+                if currentFrameIndex != index {
+                    currentFrameIndex = index
+                }
+            }
+            .onChange(of: currentFrameIndex) { oldValue, newValue in
+                guard oldValue != newValue else { return }
+                if scrollPosition != newValue {
+                    scrollPosition = newValue
+                }
+            }
+            .onAppear {
+                if scrollPosition == nil {
+                    scrollPosition = min(max(currentFrameIndex, 0), max(timelineItems.count - 1, 0))
+                }
+            }
+        } else {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: metrics.spacing) {
+                    timelineItemsContent(in: geometry)
+                }
+                .padding(.horizontal, 2)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func timelineItemsContent(in geometry: GeometryProxy) -> some View {
+        let indexedItems = Array(timelineItems.enumerated())
+
+        ForEach(indexedItems, id: \.element.id) { index, item in
+            if dropIndicatorIndex == index {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Color.accentColor)
+                    .frame(width: 3, height: metrics.rowHeight)
+                    .transition(.scale)
+                    .zIndex(1)
+            }
+
+            TimelineItemView(
+                item: item,
+                projectId: projectId,
+                currentFrameIndex: $currentFrameIndex,
+                metrics: metrics,
+                onDelete: onDelete,
+                onDuplicate: onDuplicate,
+                onMoveFrame: onMoveFrame,
+                onMoveTimelineItem: onMoveTimelineItem,
+                onSetStackId: onSetStackId,
+                onMoveFrameById: onMoveFrameById,
+                onTapAddToStack: onTapAddToStack,
+                onSelectFrame: onSelectFrame,
+                getGlobalIndex: getGlobalIndex,
+                draggedTimelineItemId: $draggedTimelineItemId,
+                draggedFrameId: $draggedFrameId,
+                dropIndicatorIndex: $dropIndicatorIndex,
+                timelineItems: timelineItems,
+                indexInTimeline: index,
+                geometry: geometry
+            )
+            .id(index)
+            .zIndex((draggedTimelineItemId == item.id) ? 2 : 1)
+            .scrollTransition { content, phase in
+                content
+                    .opacity(phase.isIdentity ? 1.0 : 0.8)
+                    .scaleEffect(phase.isIdentity ? 1.0 : 0.95)
+            }
+        }
+
+        if dropIndicatorIndex == timelineItems.count {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(Color.accentColor)
+                .frame(width: 3, height: metrics.rowHeight)
+                .transition(.scale)
+                .zIndex(1)
+        }
+    }
+
+    private var plusMenuOverlay: some View {
+        HStack {
+            Spacer()
+            Menu {
+                Button(action: onAddCamera) {
+                    Label(LocalizedStringKey("create.camera"), systemImage: "camera")
+                }
+
+                Button(action: onAddPhotoLibrary) {
+                    Label(LocalizedStringKey("create.photoLibrary"), systemImage: "photo.on.rectangle")
+                }
+
+                Button(action: onAddTitleCredits) {
+                    Label(LocalizedStringKey("editor.titleCredits"), systemImage: "text.alignleft")
+                }
+
+                // TODO: ca - uncomment this after sound timeline fixes
+//                Button(action: onAddAudio) {
+//                    Label(LocalizedStringKey("editor.addAudio"), systemImage: "waveform")
+//                }
+            } label: {
+                Image(systemName: "plus")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(.white)
+                    .frame(width: metrics.plusButtonSize, height: metrics.plusButtonSize)
+                    .background(Circle().fill(Color.accentColor))
+            }
+            .menuStyle(.borderlessButton)
+            .padding(.trailing, 16)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+        .allowsHitTesting(true)
+    }
+
 }
 
 struct TimelineLooseDropDelegate: DropDelegate {
@@ -344,6 +380,7 @@ struct TimelineItemView: View {
     let item: TimelineItem
     let projectId: UUID
     @Binding var currentFrameIndex: Int
+    let metrics: TimelineMetrics
     let onDelete: (Int) -> Void
     let onDuplicate: (Int) -> Void
     let onMoveFrame: (Int, Int) -> Void
@@ -360,6 +397,48 @@ struct TimelineItemView: View {
     let indexInTimeline: Int
     let geometry: GeometryProxy
 
+    init(
+        item: TimelineItem,
+        projectId: UUID,
+        currentFrameIndex: Binding<Int>,
+        metrics: TimelineMetrics = .regular,
+        onDelete: @escaping (Int) -> Void,
+        onDuplicate: @escaping (Int) -> Void,
+        onMoveFrame: @escaping (Int, Int) -> Void,
+        onMoveTimelineItem: @escaping (Int, Int) -> Void,
+        onSetStackId: @escaping (UUID, String?) -> Void,
+        onMoveFrameById: @escaping (UUID, Int) -> Void,
+        onTapAddToStack: @escaping (String) -> Void,
+        onSelectFrame: @escaping (Int) -> Void,
+        getGlobalIndex: @escaping (FrameAsset) -> Int,
+        draggedTimelineItemId: Binding<String?>,
+        draggedFrameId: Binding<UUID?>,
+        dropIndicatorIndex: Binding<Int?>,
+        timelineItems: [TimelineItem],
+        indexInTimeline: Int,
+        geometry: GeometryProxy
+    ) {
+        self.item = item
+        self.projectId = projectId
+        self._currentFrameIndex = currentFrameIndex
+        self.metrics = metrics
+        self.onDelete = onDelete
+        self.onDuplicate = onDuplicate
+        self.onMoveFrame = onMoveFrame
+        self.onMoveTimelineItem = onMoveTimelineItem
+        self.onSetStackId = onSetStackId
+        self.onMoveFrameById = onMoveFrameById
+        self.onTapAddToStack = onTapAddToStack
+        self.onSelectFrame = onSelectFrame
+        self.getGlobalIndex = getGlobalIndex
+        self._draggedTimelineItemId = draggedTimelineItemId
+        self._draggedFrameId = draggedFrameId
+        self._dropIndicatorIndex = dropIndicatorIndex
+        self.timelineItems = timelineItems
+        self.indexInTimeline = indexInTimeline
+        self.geometry = geometry
+    }
+
     private func isFrameSelected(_ frame: FrameAsset) -> Bool {
         let globalIndex = getGlobalIndex(frame)
         return globalIndex == currentFrameIndex
@@ -371,14 +450,27 @@ struct TimelineItemView: View {
 
     var body: some View {
         switch item {
+        case .titleFrame:
+            SpecialTimelineFrameView(
+                systemImage: "textformat",
+                metrics: metrics,
+                isSelected: indexInTimeline == currentFrameIndex
+            )
+            .id(item.id)
+            .onTapGesture {
+                onSelectFrame(indexInTimeline)
+            }
+            .opacity(isBeingDragged ? 0.3 : 1.0)
+
         case .singleFrame(let frame):
             SingleFrameView(
                 frame: frame,
                 projectId: projectId,
                 isSelected: isFrameSelected(frame),
+                metrics: metrics,
                 onDelete: onDelete,
                 onDuplicate: onDuplicate,
-                onSelect: { onSelectFrame(getGlobalIndex(frame)) }
+                onSelect: { onSelectFrame(indexInTimeline) }
             )
             .id(frame.id)
             .opacity(isBeingDragged ? 0.3 : 1.0)
@@ -400,7 +492,42 @@ struct TimelineItemView: View {
                 onMoveFrameById: onMoveFrameById,
                 dropIndicatorIndex: $dropIndicatorIndex
             ))
+
+        case .creditsFrame:
+            SpecialTimelineFrameView(
+                systemImage: "list.bullet",
+                metrics: metrics,
+                isSelected: indexInTimeline == currentFrameIndex
+            )
+            .id(item.id)
+            .onTapGesture {
+                onSelectFrame(indexInTimeline)
+            }
+            .opacity(isBeingDragged ? 0.3 : 1.0)
         }
+    }
+}
+
+private struct SpecialTimelineFrameView: View {
+    let systemImage: String
+    let metrics: TimelineMetrics
+    let isSelected: Bool
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .fill(Color.black.opacity(0.65))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                        .strokeBorder(isSelected ? Color.accentColor.opacity(0.9) : Color.white.opacity(0.10), lineWidth: isSelected ? 2 : 1)
+                }
+
+            Image(systemName: systemImage)
+                .font(.system(size: max(14, metrics.frameSize * 0.28), weight: .semibold))
+                .foregroundStyle(.white.opacity(0.92))
+        }
+        .frame(width: metrics.frameSize, height: metrics.frameSize)
+        .contentShape(Rectangle())
     }
 }
 
@@ -408,13 +535,14 @@ struct SingleFrameView: View {
     let frame: FrameAsset
     let projectId: UUID
     let isSelected: Bool
+    let metrics: TimelineMetrics
     let onDelete: (Int) -> Void
     let onDuplicate: (Int) -> Void
     let onSelect: () -> Void
 
     var body: some View {
         TimelineThumbnailView(frame: frame, projectId: projectId, isSelected: isSelected)
-            .frame(width: TimelineUI.frameSize, height: TimelineUI.frameSize)
+            .frame(width: metrics.frameSize, height: metrics.frameSize)
             .background(
                 RoundedRectangle(cornerRadius: 4)
                     .fill(Color.gray.opacity(0.1))
