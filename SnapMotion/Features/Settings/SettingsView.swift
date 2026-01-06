@@ -19,6 +19,16 @@ struct SettingsView: View {
         NavigationStack {
             List {
                 membershipSection
+                
+                Section {
+                    Link(destination: AppLegalLinks.privacyPolicyURL) {
+                        Text(LocalizedStringKey("paywall.privacyPolicy"))
+                    }
+                    
+                    Link(destination: AppLegalLinks.termsOfUseURL) {
+                        Text(LocalizedStringKey("paywall.termsOfService"))
+                    }
+                }
 
                 Section {
                     Picker(selection: $languageManager.currentLanguage) {

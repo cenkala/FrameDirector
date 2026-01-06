@@ -169,6 +169,7 @@ struct PaywallView: View {
         let isSelected = viewModel?.selectedPackageIdentifier == package.identifier
         let description = package.storeProduct.localizedDescription.trimmingCharacters(in: .whitespacesAndNewlines)
         let hasDescription = !description.isEmpty
+        let periodLabel = packagePeriodLabel(package)
         
         return Button {
             viewModel?.select(package: package)
@@ -197,12 +198,28 @@ struct PaywallView: View {
                             .foregroundStyle(.secondary)
                             .lineLimit(2)
                     }
+                    
+                    if let periodLabel {
+                        Text(periodLabel)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                Text(package.storeProduct.localizedPriceString)
-                    .font(.headline)
-                    .foregroundStyle(.primary)
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(package.storeProduct.localizedPriceString)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    
+                    if let periodUnitLabel = packagePeriodUnitLabel(package) {
+                        Text("/ \(periodUnitLabel)")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                }
             }
             .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
             .padding(.horizontal, AppTheme.Metrics.screenPadding)
@@ -217,16 +234,56 @@ struct PaywallView: View {
         .buttonStyle(.plain)
         .disabled(viewModel?.isPurchasing == true)
     }
+
+    private func packagePeriodLabel(_ package: Package) -> String? {
+        switch package.packageType {
+        case .weekly:
+            return "1 week"
+        case .monthly:
+            return "1 month"
+        case .twoMonth:
+            return "2 months"
+        case .threeMonth:
+            return "3 months"
+        case .sixMonth:
+            return "6 months"
+        case .annual:
+            return "1 year"
+        case .lifetime:
+            return "Lifetime"
+        case .custom, .unknown:
+            return nil
+        @unknown default:
+            return nil
+        }
+    }
+
+    private func packagePeriodUnitLabel(_ package: Package) -> String? {
+        switch package.packageType {
+        case .weekly:
+            return "week"
+        case .monthly, .twoMonth, .threeMonth, .sixMonth:
+            return "month"
+        case .annual:
+            return "year"
+        case .lifetime:
+            return nil
+        case .custom, .unknown:
+            return nil
+        @unknown default:
+            return nil
+        }
+    }
     
     private var footerSection: some View {
         HStack(spacing: 20) {
-            Link(destination: URL(string: "https://example.com/terms")!) {
+            Link(destination: AppLegalLinks.termsOfUseURL) {
                 Text(LocalizedStringKey("paywall.termsOfService"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             
-            Link(destination: URL(string: "https://example.com/privacy")!) {
+            Link(destination: AppLegalLinks.privacyPolicyURL) {
                 Text(LocalizedStringKey("paywall.privacyPolicy"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
