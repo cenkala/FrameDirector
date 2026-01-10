@@ -42,6 +42,7 @@ struct FrameDirectorApp: App {
                 }
             }
             .environment(\.locale, languageManager.locale)
+            .preferredColorScheme(.dark)
         }
         .modelContainer(sharedModelContainer)
     }
