@@ -105,26 +105,7 @@ struct SettingsView: View {
                     .tint(.accentColor)
                 }
 
-                if entitlementService.isPro {
-                    Button {
-                        Task {
-                            isRefreshingEntitlements = true
-                            await entitlementService.checkEntitlements()
-                            isRefreshingEntitlements = false
-                        }
-                    } label: {
-                        HStack {
-                            Text(LocalizedStringKey("settings.membership.refresh"))
-                                .frame(maxWidth: .infinity)
-                            if isRefreshingEntitlements {
-                                ProgressView()
-                            }
-                        }
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(.accentColor)
-                    .disabled(isRefreshingEntitlements)
-                } else {
+                if !entitlementService.isPro {
                     Button {
                         Task {
                             isRestoringPurchases = true
