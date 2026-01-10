@@ -128,7 +128,7 @@
 /* Pro Features */
 "pro.locked" = "Pro Feature";
 "pro.unlockMessage" = "Upgrade to Pro to unlock this feature";
-"pro.upgrade" = "Upgrade to Pro";
+"pro.upgrade" = "Upgrade to PRO";
 
 /* Errors */
 "error.general" = "An error occurred";

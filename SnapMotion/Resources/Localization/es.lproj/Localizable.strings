@@ -128,7 +128,7 @@
 /* Pro Features */
 "pro.locked" = "Función Pro";
 "pro.unlockMessage" = "Actualiza a Pro para desbloquear esta función";
-"pro.upgrade" = "Actualizar a Pro";
+"pro.upgrade" = "Actualizar a PRO";
 
 /* Errors */
 "error.general" = "Ocurrió un error";

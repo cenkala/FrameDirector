@@ -15,6 +15,12 @@ struct SettingsView: View {
     @State private var isRestoringPurchases = false
     @State private var isRefreshingEntitlements = false
     
+    private let onUpgradeToPro: (() -> Void)?
+    
+    init(onUpgradeToPro: (() -> Void)? = nil) {
+        self.onUpgradeToPro = onUpgradeToPro
+    }
+    
     var body: some View {
         NavigationStack {
             List {
@@ -33,35 +39,12 @@ struct SettingsView: View {
                 Section {
                     Picker(selection: $languageManager.currentLanguage) {
                         ForEach(SupportedLanguage.allCases) { language in
-                            Text(language.displayName)
+                            Text("\(language.flagEmoji) \(language.displayName)")
                                 .tag(language)
                         }
                     } label: {
                         Text(LocalizedStringKey("settings.language"))
                     }
-                }
-                
-                Section {
-                    Button {
-                        Task {
-                            isRestoringPurchases = true
-                            do {
-                                try await entitlementService.restorePurchases()
-                            } catch {
-                                print("Failed to restore purchases: \(error)")
-                            }
-                            isRestoringPurchases = false
-                        }
-                    } label: {
-                        HStack {
-                            Text(LocalizedStringKey("settings.restorePurchases"))
-                            if isRestoringPurchases {
-                                Spacer()
-                                ProgressView()
-                            }
-                        }
-                    }
-                    .disabled(isRestoringPurchases)
                 }
                 
                 Section {
@@ -122,24 +105,68 @@ struct SettingsView: View {
                     .tint(.accentColor)
                 }
 
-                Button {
-                    Task {
-                        isRefreshingEntitlements = true
-                        await entitlementService.checkEntitlements()
-                        isRefreshingEntitlements = false
-                    }
-                } label: {
-                    HStack {
-                        Text(LocalizedStringKey("settings.membership.refresh"))
-                            .frame(maxWidth: .infinity)
-                        if isRefreshingEntitlements {
-                            ProgressView()
+                if entitlementService.isPro {
+                    Button {
+                        Task {
+                            isRefreshingEntitlements = true
+                            await entitlementService.checkEntitlements()
+                            isRefreshingEntitlements = false
+                        }
+                    } label: {
+                        HStack {
+                            Text(LocalizedStringKey("settings.membership.refresh"))
+                                .frame(maxWidth: .infinity)
+                            if isRefreshingEntitlements {
+                                ProgressView()
+                            }
                         }
                     }
+                    .buttonStyle(.bordered)
+                    .tint(.accentColor)
+                    .disabled(isRefreshingEntitlements)
+                } else {
+                    Button {
+                        Task {
+                            isRestoringPurchases = true
+                            do {
+                                try await entitlementService.restorePurchases()
+                            } catch {
+                                print("Failed to restore purchases: \(error)")
+                            }
+                            isRestoringPurchases = false
+                        }
+                    } label: {
+                        HStack {
+                            Text(LocalizedStringKey("settings.restorePurchases"))
+                                .foregroundStyle(Color.accentColor)
+                            if isRestoringPurchases {
+                                ProgressView()
+                            }
+                        }
+                    }
+                    .disabled(isRestoringPurchases)
+                    .buttonStyle(.plain)
+                    
+                    Button {
+                        onUpgradeToPro?()
+                        dismiss()
+                    } label: {
+                        Text(LocalizedStringKey("pro.upgrade"))
+                            .font(.headline.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                            .foregroundStyle(.white)
+                            .background(
+                                LinearGradient(
+                                    colors: [Color.accentColor, Color.purple],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .shadow(color: Color.purple.opacity(0.25), radius: 10, x: 0, y: 6)
+                    }
                 }
-                .buttonStyle(.bordered)
-                .tint(.accentColor)
-                .disabled(isRefreshingEntitlements)
             }
             .appCard(isElevated: false)
             .listRowInsets(EdgeInsets())
@@ -172,8 +199,7 @@ struct SettingsView: View {
 extension Bundle {
     var appVersion: String {
         let version = infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-        let build = infoDictionary?["CFBundleVersion"] as? String ?? "1"
-        return "\(version) (\(build))"
+        return version
     }
 }
 

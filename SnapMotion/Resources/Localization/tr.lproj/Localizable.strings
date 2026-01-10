@@ -128,7 +128,7 @@
 /* Pro Features */
 "pro.locked" = "Pro Özellik";
 "pro.unlockMessage" = "Bu özelliğin kilidini açmak için Pro'ya yükseltin";
-"pro.upgrade" = "Pro'ya Yükselt";
+"pro.upgrade" = "PRO'ya Yükselt";
 
 /* Errors */
 "error.general" = "Bir hata oluştu";

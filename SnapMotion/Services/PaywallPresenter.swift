@@ -27,12 +27,13 @@ final class PaywallPresenter {
     private init() {}
     
     func showPaywallIfNeeded() {
-        if !hasShownInitialPaywall {
-            shouldShowPaywall = true
-        }
+        guard !EntitlementService.shared.isPro else { return }
+        guard !hasShownInitialPaywall else { return }
+        shouldShowPaywall = true
     }
     
     func presentPaywall() {
+        guard !EntitlementService.shared.isPro else { return }
         shouldShowPaywall = true
     }
     

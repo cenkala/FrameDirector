@@ -18,6 +18,8 @@ struct HomeView: View {
     @State private var selectedProject: MovieProject?
     @State private var showEditor = false
     @State private var showPlayer = false
+    @State private var hasScheduledInitialPaywallPresentation = false
+    @State private var shouldPresentPaywallAfterSettingsDismiss = false
     
     var body: some View {
         NavigationStack {
@@ -39,8 +41,17 @@ struct HomeView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showSettings) {
-                SettingsView()
+            .sheet(isPresented: $showSettings, onDismiss: {
+                guard shouldPresentPaywallAfterSettingsDismiss else { return }
+                shouldPresentPaywallAfterSettingsDismiss = false
+                
+                DispatchQueue.main.async {
+                    paywallPresenter.presentPaywall()
+                }
+            }) {
+                SettingsView(onUpgradeToPro: {
+                    shouldPresentPaywallAfterSettingsDismiss = true
+                })
             }
             .sheet(isPresented: $paywallPresenter.shouldShowPaywall) {
                 PaywallView()
@@ -78,8 +89,19 @@ struct HomeView: View {
             if viewModel == nil {
                 viewModel = HomeViewModel(modelContext: modelContext)
             }
-            paywallPresenter.showPaywallIfNeeded()
             viewModel?.loadProjects()
+            
+            if !hasScheduledInitialPaywallPresentation {
+                hasScheduledInitialPaywallPresentation = true
+                DispatchQueue.main.async {
+                    paywallPresenter.showPaywallIfNeeded()
+                }
+            }
+        }
+        .onChange(of: showSettings) { _, isPresented in
+            guard !isPresented else { return }
+            guard shouldPresentPaywallAfterSettingsDismiss else { return }
+            // Presentation is handled in the sheet's onDismiss to ensure the Settings sheet is fully gone.
         }
         .onChange(of: showEditor) { _, isPresented in
             if !isPresented {

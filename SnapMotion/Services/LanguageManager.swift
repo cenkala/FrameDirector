@@ -15,6 +15,15 @@ enum SupportedLanguage: String, CaseIterable, Identifiable {
     
     var id: String { rawValue }
     
+    var flagEmoji: String {
+        switch self {
+        case .turkish: return "🇹🇷"
+        case .english: return "🇺🇸"
+        case .german: return "🇩🇪"
+        case .spanish: return "🇪🇸"
+        }
+    }
+    
     var displayName: String {
         switch self {
         case .turkish: return "Türkçe"
