@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import FirebaseAnalytics
 
 struct CreateMovieFlowView: View {
     @Environment(\.modelContext) private var modelContext
@@ -68,6 +69,14 @@ struct CreateMovieFlowView: View {
         let project = MovieProject(title: projectTitle)
         modelContext.insert(project)
         try? modelContext.save()
+
+        // Log Firebase Analytics event for stop motion creation
+        Analytics.logEvent("stop_motion_created", parameters: [
+            "project_title": projectTitle,
+            "timestamp": Date().timeIntervalSince1970,
+            "idfv": IDFVManager.shared.getIDFV()
+        ])
+
         dismiss()
         onProjectCreated(project)
     }

@@ -7,9 +7,12 @@
 
 import SwiftUI
 import SwiftData
+import FirebaseCore
+
 
 @main
 struct FrameDirectorApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @State private var languageManager = LanguageManager.shared
     @State private var splashViewModel = SplashViewModel(entitlementService: EntitlementService.shared)
     

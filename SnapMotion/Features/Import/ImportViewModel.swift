@@ -9,6 +9,7 @@ import Foundation
 import SwiftUI
 import PhotosUI
 import SwiftData
+import FirebaseAnalytics
 
 @Observable
 final class ImportViewModel {
@@ -90,6 +91,15 @@ final class ImportViewModel {
                 normalizeFrameOrder()
                 project.updatedAt = Date()
                 try? modelContext.save()
+
+                // Log Firebase Analytics event for photo library import
+                Analytics.logEvent("content_photo_import", parameters: [
+                    "project_id": project.id.uuidString,
+                    "project_title": project.title,
+                    "source": source.rawValue,
+                    "idfv": IDFVManager.shared.getIDFV(),
+                    "timestamp": Date().timeIntervalSince1970
+                ])
             }
         } catch {
             await MainActor.run {

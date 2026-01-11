@@ -10,6 +10,7 @@ import SwiftUI
 import SwiftData
 import AVFoundation
 import AVFAudio
+import FirebaseAnalytics
 
 @MainActor
 @Observable
@@ -256,6 +257,15 @@ final class CaptureViewModel {
             normalizeFrameOrder()
             project.updatedAt = Date()
             try modelContext.save()
+
+            // Log Firebase Analytics event for camera capture
+            Analytics.logEvent("content_camera_capture", parameters: [
+                "project_id": project.id.uuidString,
+                "project_title": project.title,
+                "idfv": IDFVManager.shared.getIDFV(),
+                "timestamp": Date().timeIntervalSince1970
+            ])
+
             return frameAsset
         } catch {
             errorMessage = error.localizedDescription
