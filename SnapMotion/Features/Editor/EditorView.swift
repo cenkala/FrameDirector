@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 import UIKit
 import Photos
+import PhotosUI
 import UniformTypeIdentifiers
 
 struct EditorView: View {
@@ -19,6 +20,8 @@ struct EditorView: View {
     @Bindable var viewModel: EditorViewModel
     @State private var showCaptureView = false
     @State private var showImportView = false
+    @State private var selectedPhotoItems: [PhotosPickerItem] = []
+    @State private var isProcessingPhotos = false
     @State private var paywallPresenter = PaywallPresenter.shared
     @State private var isExporting = false
     @State private var exportError: String?
@@ -113,8 +116,17 @@ struct EditorView: View {
                 lastFrameImage: currentFrameImage
             )
         }
-        .sheet(isPresented: $showImportView) {
-            ImportView(project: project, modelContext: modelContext, targetStackId: nil)
+        .photosPicker(isPresented: $showImportView, selection: $selectedPhotoItems, maxSelectionCount: 100, matching: .any(of: [.images, .videos]))
+        .onChange(of: selectedPhotoItems) { _, newItems in
+            guard !newItems.isEmpty else { return }
+            Task {
+                isProcessingPhotos = true
+                let importVM = ImportViewModel(project: project, modelContext: modelContext, targetStackId: nil)
+                importVM.selectedItems = newItems
+                await importVM.processSelectedItems()
+                selectedPhotoItems = []
+                isProcessingPhotos = false
+            }
         }
         .sheet(isPresented: $paywallPresenter.shouldShowPaywall) {
             PaywallView()
