@@ -10,6 +10,10 @@
 		05A2C3602F009A8800FE7D6D /* ReceiptParser in Frameworks */ = {isa = PBXBuildFile; productRef = 05A2C35F2F009A8800FE7D6D /* ReceiptParser */; };
 		05A2C3622F009A8800FE7D6D /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 05A2C3612F009A8800FE7D6D /* RevenueCat */; };
 		05A2C3642F009A8800FE7D6D /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 05A2C3632F009A8800FE7D6D /* RevenueCatUI */; };
+		ED8146262F136A9C00BBBC5C /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = ED8146252F136A9C00BBBC5C /* FirebaseAnalytics */; };
+		ED8146282F136A9C00BBBC5C /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = ED8146272F136A9C00BBBC5C /* FirebaseCore */; };
+		ED81462A2F136A9C00BBBC5C /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = ED8146292F136A9C00BBBC5C /* FirebaseCrashlytics */; };
+		ED81462C2F136A9C00BBBC5C /* FirebaseInAppMessaging-Beta in Frameworks */ = {isa = PBXBuildFile; productRef = ED81462B2F136A9C00BBBC5C /* FirebaseInAppMessaging-Beta */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,7 +34,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				05A2C3622F009A8800FE7D6D /* RevenueCat in Frameworks */,
+				ED81462C2F136A9C00BBBC5C /* FirebaseInAppMessaging-Beta in Frameworks */,
+				ED8146282F136A9C00BBBC5C /* FirebaseCore in Frameworks */,
 				05A2C3602F009A8800FE7D6D /* ReceiptParser in Frameworks */,
+				ED81462A2F136A9C00BBBC5C /* FirebaseCrashlytics in Frameworks */,
+				ED8146262F136A9C00BBBC5C /* FirebaseAnalytics in Frameworks */,
 				05A2C3642F009A8800FE7D6D /* RevenueCatUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -77,6 +85,10 @@
 				05A2C35F2F009A8800FE7D6D /* ReceiptParser */,
 				05A2C3612F009A8800FE7D6D /* RevenueCat */,
 				05A2C3632F009A8800FE7D6D /* RevenueCatUI */,
+				ED8146252F136A9C00BBBC5C /* FirebaseAnalytics */,
+				ED8146272F136A9C00BBBC5C /* FirebaseCore */,
+				ED8146292F136A9C00BBBC5C /* FirebaseCrashlytics */,
+				ED81462B2F136A9C00BBBC5C /* FirebaseInAppMessaging-Beta */,
 			);
 			productName = SnapMotion;
 			productReference = 05732DC92F00868600EE7291 /* SnapMotion.app */;
@@ -111,6 +123,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				05A2C35E2F009A8800FE7D6D /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
+				ED8146242F136A9C00BBBC5C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 05732DCA2F00868600EE7291 /* Products */;
@@ -266,7 +279,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = E77CTY4H5P;
+				DEVELOPMENT_TEAM = W6Q92ZA8LP;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -314,7 +327,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = E77CTY4H5P;
+				DEVELOPMENT_TEAM = W6Q92ZA8LP;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -389,6 +402,14 @@
 				minimumVersion = 5.52.0;
 			};
 		};
+		ED8146242F136A9C00BBBC5C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.7.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -406,6 +427,26 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 05A2C35E2F009A8800FE7D6D /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
 			productName = RevenueCatUI;
+		};
+		ED8146252F136A9C00BBBC5C /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ED8146242F136A9C00BBBC5C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		ED8146272F136A9C00BBBC5C /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ED8146242F136A9C00BBBC5C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		ED8146292F136A9C00BBBC5C /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ED8146242F136A9C00BBBC5C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
+		};
+		ED81462B2F136A9C00BBBC5C /* FirebaseInAppMessaging-Beta */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ED8146242F136A9C00BBBC5C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = "FirebaseInAppMessaging-Beta";
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

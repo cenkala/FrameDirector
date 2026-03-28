@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import FirebaseAnalytics
 
 actor ExportService {
     private let videoRenderer = VideoRenderer()
@@ -43,12 +44,25 @@ actor ExportService {
         }
         
         let savedURL = try await storage.saveExportedVideo(finalVideoURL, projectId: project.id)
-        
+
+        // Log Firebase Analytics event for video export
+        let hasAudio = project.audioFileName != nil && !(project.audioFileName?.isEmpty ?? true)
+        await Analytics.logEvent("video_exported", parameters: [
+            "project_id": project.id.uuidString,
+            "project_title": project.title,
+            "frame_count": frameImages.count,
+            "fps": project.fps,
+            "has_audio": hasAudio,
+            "duration_seconds": project.duration,
+            "idfv": IDFVManager.shared.getIDFV(),
+            "timestamp": Date().timeIntervalSince1970
+        ])
+
         try? FileManager.default.removeItem(at: tempURL)
         if finalVideoURL != tempURL {
             try? FileManager.default.removeItem(at: finalVideoURL)
         }
-        
+
         return savedURL
     }
     

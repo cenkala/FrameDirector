@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import FirebaseAnalytics
 
 nonisolated struct ExtraCreditField: Codable, Identifiable, Sendable, Equatable {
     var id: UUID
@@ -110,6 +111,25 @@ final class TitleCreditsViewModel {
         
         project.updatedAt = Date()
         try? modelContext.save()
+
+        // Log Firebase Analytics event for title/credits addition
+        let hasTitle = !titleText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let hasCredits = selectedMode == .plain
+            ? !plainCredits.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            : !structuredCredits.director.isEmpty || !structuredCredits.animator.isEmpty ||
+              !structuredCredits.music.isEmpty || !structuredCredits.thanks.isEmpty ||
+              !structuredCredits.extras.filter({ !$0.label.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                                               !$0.value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }).isEmpty
+
+        Analytics.logEvent("content_title_credits", parameters: [
+            "project_id": project.id.uuidString,
+            "project_title": project.title,
+            "has_title": hasTitle,
+            "has_credits": hasCredits,
+            "credits_mode": selectedMode.rawValue,
+            "idfv": IDFVManager.shared.getIDFV(),
+            "timestamp": Date().timeIntervalSince1970
+        ])
     }
 }
 
